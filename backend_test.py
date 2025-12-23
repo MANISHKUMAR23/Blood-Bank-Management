@@ -376,7 +376,7 @@ def main():
     # Test sequence
     test_sequence = [
         ("User Registration", tester.test_user_registration),
-        ("User Login", lambda: tester.test_user_login(f"admin_{int(time.time())}@bloodbank.com", "AdminPass123!")),
+        ("User Login", lambda: tester.test_user_login(tester.admin_email, tester.admin_password)),
         ("Donor Registration", tester.test_donor_registration),
         ("Donor Eligibility Check", tester.test_donor_eligibility),
         ("Health Screening", tester.test_health_screening),
