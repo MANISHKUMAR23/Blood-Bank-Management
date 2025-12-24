@@ -121,6 +121,15 @@ class DiscardReason(str, Enum):
     DAMAGED = "damaged"
     OTHER = "other"
 
+class DonorRequestStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+class DonorRequestType(str, Enum):
+    NEW_REGISTRATION = "new_registration"
+    UPDATE = "update"
+
 # ==================== MODELS ====================
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
