@@ -9,7 +9,7 @@ const api = axios.create({
 
 // Add auth token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token') || localStorage.getItem('donor_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -21,8 +21,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Don't redirect for public pages
+      const isPublicPage = window.location.pathname.startsWith('/donor') && !window.location.pathname.startsWith('/donors');
+      if (!isPublicPage) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -33,6 +37,24 @@ export const authAPI = {
   login: (data) => api.post('/auth/login', data),
   register: (data) => api.post('/auth/register', data),
   me: () => api.get('/auth/me'),
+};
+
+// Public Donor APIs (no auth required)
+export const publicDonorAPI = {
+  register: (data) => api.post('/public/donor-register', data),
+  checkStatus: (identityType, identityNumber) => api.get(`/public/donor-status/${identityType}/${identityNumber}`),
+  requestOTP: (data) => api.post('/public/donor-login/request-otp', null, { params: data }),
+  verifyOTP: (donorId, otp) => api.post('/public/donor-login/verify-otp', null, { params: { donor_id: donorId, otp } }),
+  getProfile: () => api.get('/public/donor-profile'),
+};
+
+// Donor Request APIs (Staff only)
+export const donorRequestAPI = {
+  getAll: (params) => api.get('/donor-requests', { params }),
+  getById: (id) => api.get(`/donor-requests/${id}`),
+  checkDuplicate: (id) => api.post(`/donor-requests/${id}/check-duplicate`),
+  approve: (id) => api.post(`/donor-requests/${id}/approve`),
+  reject: (id, reason) => api.post(`/donor-requests/${id}/reject`, null, { params: { rejection_reason: reason } }),
 };
 
 // User APIs
