@@ -198,6 +198,58 @@ class DonorCreate(BaseModel):
     consent_given: bool = False
     registration_channel: str = "on_site"
 
+# Donor Request Model (Airlock - Public registration goes here first)
+class DonorRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    request_id: str = ""  # Auto-generated like "REG-2024-0001"
+    donor_id: Optional[str] = None  # Set after approval
+    # Identity Info
+    identity_type: str
+    identity_number: str
+    # Demographics
+    full_name: str
+    date_of_birth: str
+    gender: str
+    weight: Optional[float] = None
+    # Contact Info
+    phone: str
+    email: Optional[str] = None
+    address: str
+    # ID Proof
+    id_proof_image: Optional[str] = None  # Base64 encoded
+    # Consent
+    consent_given: bool = False
+    # Request Details
+    request_type: DonorRequestType = DonorRequestType.NEW_REGISTRATION
+    status: DonorRequestStatus = DonorRequestStatus.PENDING
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class DonorRequestCreate(BaseModel):
+    identity_type: str
+    identity_number: str
+    full_name: str
+    date_of_birth: str
+    gender: str
+    weight: Optional[float] = None
+    phone: str
+    email: Optional[str] = None
+    address: str
+    id_proof_image: Optional[str] = None
+    consent_given: bool = False
+
+class DonorOTP(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    donor_id: str
+    otp: str
+    expires_at: datetime
+    used: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class Screening(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
