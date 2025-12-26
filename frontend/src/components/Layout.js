@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   Users, Droplet, Clipboard, FlaskConical, Layers, ShieldCheck,
   Package, ClipboardList, Truck, RotateCcw, Trash2, BarChart3,
-  Settings, LogOut, Menu, X, Sun, Moon, Home, Microscope
+  Settings, LogOut, Menu, X, Sun, Moon, Home, Microscope, UserPlus
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -30,6 +30,7 @@ const roleLabels = {
 
 const navItems = [
   { path: '/dashboard', icon: Home, label: 'Dashboard', roles: ['admin', 'registration', 'phlebotomist', 'lab_tech', 'processing', 'qc_manager', 'inventory', 'distribution'] },
+  { path: '/donor-requests', icon: UserPlus, label: 'Donor Requests', roles: ['admin', 'registration'] },
   { path: '/donors', icon: Users, label: 'Donor Management', roles: ['admin', 'registration'] },
   { path: '/screening', icon: Clipboard, label: 'Screening', roles: ['admin', 'registration', 'phlebotomist'] },
   { path: '/collection', icon: Droplet, label: 'Collection', roles: ['admin', 'phlebotomist'] },
