@@ -89,7 +89,7 @@ export default function Inventory() {
               <div>
                 <p className="text-sm text-slate-500">Total Units</p>
                 <p className="text-2xl font-bold">
-                  {inventory?.whole_blood?.reduce((sum, i) => sum + i.count, 0) || 0}
+                  {Object.values(inventory || {}).reduce((sum, data) => sum + (data?.whole_blood_units || 0), 0)}
                 </p>
               </div>
               <Package className="w-8 h-8 text-teal-600" />
@@ -103,7 +103,10 @@ export default function Inventory() {
               <div>
                 <p className="text-sm text-slate-500">Components</p>
                 <p className="text-2xl font-bold">
-                  {inventory?.components?.reduce((sum, i) => sum + i.count, 0) || 0}
+                  {Object.values(inventory || {}).reduce((sum, data) => {
+                    const compSum = Object.values(data?.components || {}).reduce((s, c) => s + c, 0);
+                    return sum + compSum;
+                  }, 0)}
                 </p>
               </div>
               <Thermometer className="w-8 h-8 text-blue-600" />
