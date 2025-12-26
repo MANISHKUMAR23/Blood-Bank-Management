@@ -149,15 +149,18 @@ class BloodBankAPITester:
 
     def test_donor_otp_request(self):
         """Test donor OTP request"""
+        if not hasattr(self, 'test_identity_type'):
+            return False
+            
         success, response = self.run_test(
             "Donor OTP Request",
             "POST",
             "public/donor-login/request-otp",
             200,
             data={
-                "identity_type": "Aadhar",
-                "identity_number": "123456789012",
-                "date_of_birth": "1990-01-01"
+                "identity_type": self.test_identity_type,
+                "identity_number": self.test_identity_number,
+                "date_of_birth": self.test_dob
             }
         )
         if success and 'otp_for_demo' in response:
@@ -167,7 +170,7 @@ class BloodBankAPITester:
 
     def test_donor_otp_verify(self):
         """Test donor OTP verification"""
-        if not self.donor_otp:
+        if not self.donor_otp or not hasattr(self, 'approved_donor_id'):
             return False
             
         success, response = self.run_test(
@@ -176,7 +179,7 @@ class BloodBankAPITester:
             "public/donor-login/verify-otp",
             200,
             data={
-                "donor_id": "D-2025-0001",  # This should be dynamic based on created donor
+                "donor_id": self.approved_donor_id,  # Use the public donor ID
                 "otp": self.donor_otp
             }
         )
