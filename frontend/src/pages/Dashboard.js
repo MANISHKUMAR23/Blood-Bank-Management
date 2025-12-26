@@ -56,22 +56,22 @@ export default function Dashboard() {
     }
   };
 
-  const inventoryChartData = inventory?.whole_blood?.map(item => ({
-    name: item._id || 'Unknown',
-    units: item.count,
-    volume: item.total_volume
-  })) || [];
+  const inventoryChartData = Object.entries(inventory || {}).map(([bloodGroup, data]) => ({
+    name: bloodGroup,
+    units: data.whole_blood_units || 0,
+  })).filter(item => item.name !== 'Unknown');
 
-  const componentChartData = inventory?.components?.reduce((acc, item) => {
-    const type = item._id?.component_type || 'Unknown';
-    const existing = acc.find(a => a.name === type);
-    if (existing) {
-      existing.value += item.count;
-    } else {
-      acc.push({ name: type.toUpperCase(), value: item.count });
-    }
+  const componentChartData = Object.entries(inventory || {}).reduce((acc, [bloodGroup, data]) => {
+    Object.entries(data.components || {}).forEach(([type, count]) => {
+      const existing = acc.find(a => a.name === type.toUpperCase());
+      if (existing) {
+        existing.value += count;
+      } else {
+        acc.push({ name: type.toUpperCase(), value: count });
+      }
+    });
     return acc;
-  }, []) || [];
+  }, []);
 
   const PIE_COLORS = ['#0d9488', '#e11d48', '#6366f1', '#f59e0b', '#10b981'];
 
