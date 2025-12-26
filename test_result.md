@@ -101,3 +101,182 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Blood Bank Management System with Public Donor Registration + Staff Approval workflow. Public donors can self-register, staff reviews and approves/rejects registrations, approved donors can login via OTP."
+
+backend:
+  - task: "Admin user creation on startup"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Added startup event to create default admin user if not exists"
+
+  - task: "Public donor registration endpoint"
+    implemented: true
+    working: NA
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "API POST /api/public/donor-register - needs testing"
+
+  - task: "Donor status check endpoint"
+    implemented: true
+    working: NA
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "API GET /api/public/donor-status/{type}/{number} - needs testing"
+
+  - task: "Donor OTP login endpoints"
+    implemented: true
+    working: NA
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "APIs for /api/public/donor-login/request-otp and verify-otp - needs testing"
+
+  - task: "Staff donor request management endpoints"
+    implemented: true
+    working: NA
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "APIs for /api/donor-requests CRUD, approve, reject - needs testing"
+
+frontend:
+  - task: "Public Donor Landing Page"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/DonorLanding.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Verified via screenshot - landing page loads correctly at /donor"
+
+  - task: "Public Donor Registration Form"
+    implemented: true
+    working: NA
+    file: "/app/frontend/src/components/DonorRegisterForm.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "3-step registration form - needs e2e testing"
+
+  - task: "Public Donor Login Form"
+    implemented: true
+    working: NA
+    file: "/app/frontend/src/components/DonorLoginForm.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "OTP-based login - needs e2e testing"
+
+  - task: "Donor Status Check Page"
+    implemented: true
+    working: NA
+    file: "/app/frontend/src/pages/DonorStatus.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "Page at /donor/status - needs e2e testing"
+
+  - task: "Donor Dashboard"
+    implemented: true
+    working: NA
+    file: "/app/frontend/src/pages/DonorDashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "Page at /donor/dashboard for logged in donors - needs e2e testing"
+
+  - task: "Staff Donor Requests Page"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/DonorRequests.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Verified via screenshot - page loads correctly at /donor-requests"
+
+  - task: "Routes for Public Donor Pages"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Added routes for /donor, /donor/dashboard, /donor/status, /donor-requests"
+
+  - task: "Navigation Link for Donor Requests"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/Layout.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Added nav item for admin and registration roles"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 2
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Public donor registration flow"
+    - "Staff approval workflow"
+    - "Donor OTP login flow"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+    - message: "Completed routing setup for Donor Registration + Staff Approval feature. All pages and components are now accessible. Need comprehensive e2e testing of the complete flow: 1) Public donor registration 2) Staff viewing and approving/rejecting requests 3) Approved donor logging in via OTP"
