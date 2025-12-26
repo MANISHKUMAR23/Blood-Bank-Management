@@ -179,8 +179,8 @@ class BloodBankAPITester:
             "POST",
             "public/donor-login/verify-otp",
             200,
-            data={
-                "donor_id": self.approved_donor_id,  # Use the public donor ID
+            params={
+                "donor_id": self.approved_donor_id,
                 "otp": self.donor_otp
             }
         )
