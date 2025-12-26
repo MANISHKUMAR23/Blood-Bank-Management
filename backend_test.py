@@ -81,16 +81,21 @@ class BloodBankAPITester:
 
     def test_public_donor_register(self):
         """Test public donor registration"""
+        # Store the identity details for later OTP testing
+        self.test_identity_type = "Aadhar"
+        self.test_identity_number = f"123456789{int(time.time()) % 1000}"
+        self.test_dob = "1990-01-01"
+        
         success, response = self.run_test(
             "Public Donor Registration",
             "POST",
             "public/donor-register",
             200,
             data={
-                "identity_type": "Aadhar",
-                "identity_number": f"123456789{int(time.time()) % 1000}",
+                "identity_type": self.test_identity_type,
+                "identity_number": self.test_identity_number,
                 "full_name": "Test Donor",
-                "date_of_birth": "1990-01-01",
+                "date_of_birth": self.test_dob,
                 "gender": "male",
                 "weight": 65.0,
                 "phone": "9876543210",
