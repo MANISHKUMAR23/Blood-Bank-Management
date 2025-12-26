@@ -66,22 +66,116 @@ class BloodBankAPITester:
             print(f"❌ Failed - Error: {str(e)}")
             return False, {}
 
-    def test_user_registration(self):
-        """Test user registration"""
+    def test_auth_me(self):
+        """Test auth/me endpoint"""
         success, response = self.run_test(
-            "Admin User Registration",
-            "POST",
-            "auth/register",
-            200,
-            data={
-                "email": self.admin_email,
-                "password": self.admin_password,
-                "full_name": "Test Admin User",
-                "role": "admin"
-            }
+            "Auth Me Endpoint",
+            "GET",
+            "auth/me",
+            200
         )
         if success and 'id' in response:
             self.admin_user_id = response['id']
+            return True
+        return False
+
+    def test_public_donor_register(self):
+        """Test public donor registration"""
+        success, response = self.run_test(
+            "Public Donor Registration",
+            "POST",
+            "public/donor-register",
+            200,
+            data={
+                "identity_type": "Aadhar",
+                "identity_number": f"123456789{int(time.time()) % 1000}",
+                "full_name": "Test Donor",
+                "date_of_birth": "1990-01-01",
+                "gender": "male",
+                "weight": 65.0,
+                "phone": "9876543210",
+                "email": "testdonor@example.com",
+                "address": "123 Test Street, Test City",
+                "id_proof_image": "base64_image_data",
+                "consent_given": True
+            }
+        )
+        if success and 'request_id' in response:
+            self.donor_request_id = response['request_id']
+            return True
+        return False
+
+    def test_public_donor_status(self):
+        """Test public donor status check"""
+        success, response = self.run_test(
+            "Public Donor Status Check",
+            "GET",
+            "public/donor-status/Aadhar/123456789012",
+            200
+        )
+        return success
+
+    def test_donor_requests_list(self):
+        """Test staff donor requests list"""
+        success, response = self.run_test(
+            "Staff Donor Requests List",
+            "GET",
+            "donor-requests",
+            200
+        )
+        return success
+
+    def test_donor_request_approve(self):
+        """Test staff approve donor request"""
+        if not self.donor_request_id:
+            return False
+        
+        success, response = self.run_test(
+            "Staff Approve Donor Request",
+            "POST",
+            f"donor-requests/{self.donor_request_id}/approve",
+            200
+        )
+        if success and 'donor_id' in response:
+            self.donor_id = response['donor_internal_id']  # Use internal ID for further tests
+            return True
+        return False
+
+    def test_donor_otp_request(self):
+        """Test donor OTP request"""
+        success, response = self.run_test(
+            "Donor OTP Request",
+            "POST",
+            "public/donor-login/request-otp",
+            200,
+            data={
+                "identity_type": "Aadhar",
+                "identity_number": "123456789012",
+                "date_of_birth": "1990-01-01"
+            }
+        )
+        if success and 'otp_for_demo' in response:
+            self.donor_otp = response['otp_for_demo']
+            return True
+        return False
+
+    def test_donor_otp_verify(self):
+        """Test donor OTP verification"""
+        if not self.donor_otp:
+            return False
+            
+        success, response = self.run_test(
+            "Donor OTP Verification",
+            "POST",
+            "public/donor-login/verify-otp",
+            200,
+            data={
+                "donor_id": "D-2025-0001",  # This should be dynamic based on created donor
+                "otp": self.donor_otp
+            }
+        )
+        if success and 'token' in response:
+            self.donor_token = response['token']
             return True
         return False
 
