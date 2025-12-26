@@ -201,8 +201,8 @@ export default function Inventory() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
             {Object.keys(BLOOD_GROUP_COLORS).map((group) => {
-              const data = inventory?.whole_blood?.find(i => i._id === group);
-              const count = data?.count || 0;
+              const data = inventory?.[group];
+              const count = data?.whole_blood_units || 0;
               const isLow = count < 5;
               const isCritical = count === 0;
               
