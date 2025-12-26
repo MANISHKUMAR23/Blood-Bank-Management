@@ -114,6 +114,9 @@ function AppRoutes() {
         {/* Reports */}
         <Route path="reports" element={<Reports />} />
         
+        {/* Alerts */}
+        <Route path="alerts" element={<Alerts />} />
+        
         {/* Admin */}
         <Route path="users" element={
           <ProtectedRoute allowedRoles={['admin']}>
