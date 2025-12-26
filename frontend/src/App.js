@@ -8,6 +8,10 @@ import Dashboard from "./pages/Dashboard";
 import DonorManagement from "./pages/DonorManagement";
 import DonorRegistration from "./pages/DonorRegistration";
 import DonorDetails from "./pages/DonorDetails";
+import DonorRequests from "./pages/DonorRequests";
+import DonorLanding from "./pages/DonorLanding";
+import DonorDashboard from "./pages/DonorDashboard";
+import DonorStatus from "./pages/DonorStatus";
 import Screening from "./pages/Screening";
 import Collection from "./pages/Collection";
 import Traceability from "./pages/Traceability";
@@ -50,8 +54,15 @@ function AppRoutes() {
   
   return (
     <Routes>
+      {/* Public Donor Routes (No auth required) */}
+      <Route path="/donor" element={<DonorLanding />} />
+      <Route path="/donor/dashboard" element={<DonorDashboard />} />
+      <Route path="/donor/status" element={<DonorStatus />} />
+      
+      {/* Staff Login */}
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
       
+      {/* Protected Staff Routes */}
       <Route path="/" element={
         <ProtectedRoute>
           <Layout />
@@ -64,6 +75,13 @@ function AppRoutes() {
         <Route path="donors" element={<DonorManagement />} />
         <Route path="donors/register" element={<DonorRegistration />} />
         <Route path="donors/:id" element={<DonorDetails />} />
+        
+        {/* Donor Registration Requests (Staff Approval) */}
+        <Route path="donor-requests" element={
+          <ProtectedRoute allowedRoles={['admin', 'registration']}>
+            <DonorRequests />
+          </ProtectedRoute>
+        } />
         
         {/* Screening & Collection */}
         <Route path="screening" element={<Screening />} />
