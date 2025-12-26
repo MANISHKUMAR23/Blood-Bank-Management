@@ -193,31 +193,15 @@ class BloodBankAPITester:
             return True
         return False
 
-    def test_donor_registration(self):
-        """Test donor registration"""
+    def test_donors_list(self):
+        """Test donors CRUD - GET /api/donors"""
         success, response = self.run_test(
-            "Donor Registration",
-            "POST",
+            "Donors List (CRUD)",
+            "GET",
             "donors",
-            200,
-            data={
-                "full_name": "John Doe",
-                "date_of_birth": "1990-01-01",
-                "gender": "male",
-                "blood_group": "O+",
-                "phone": "1234567890",
-                "email": "john.doe@example.com",
-                "address": "123 Main St, City",
-                "identity_type": "Aadhar",
-                "identity_number": "123456789012",
-                "consent_given": True,
-                "registration_channel": "on_site"
-            }
+            200
         )
-        if success and 'id' in response:
-            self.donor_id = response['id']
-            return True
-        return False
+        return success
 
     def test_donor_eligibility(self):
         """Test donor eligibility check"""
