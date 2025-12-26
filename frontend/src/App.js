@@ -24,6 +24,7 @@ import Distribution from "./pages/Distribution";
 import Returns from "./pages/Returns";
 import Discards from "./pages/Discards";
 import Reports from "./pages/Reports";
+import Alerts from "./pages/Alerts";
 import UserManagement from "./pages/UserManagement";
 import "./App.css";
 
