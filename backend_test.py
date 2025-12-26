@@ -14,13 +14,17 @@ class BloodBankAPITester:
         self.tests_passed = 0
         self.admin_user_id = None
         self.donor_id = None
+        self.donor_request_id = None
+        self.donor_otp = None
+        self.donor_token = None
         self.screening_id = None
         self.donation_id = None
         self.unit_id = None
         self.component_id = None
         self.request_id = None
-        self.admin_email = f"admin_{int(time.time())}@bloodbank.com"
-        self.admin_password = "AdminPass123!"
+        # Use the default admin credentials from the review request
+        self.admin_email = "admin@bloodbank.com"
+        self.admin_password = "adminpassword"
 
     def run_test(self, name, method, endpoint, expected_status, data=None, params=None):
         """Run a single API test"""
