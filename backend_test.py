@@ -152,20 +152,18 @@ class BloodBankAPITester:
 
     def test_donor_otp_request(self):
         """Test donor OTP request"""
-        if not hasattr(self, 'test_identity_type'):
-            print("   Missing test identity details")
+        if not hasattr(self, 'approved_donor_id'):
+            print("   Missing approved donor ID")
             return False
             
-        print(f"   Using identity: {self.test_identity_type}/{self.test_identity_number}, DOB: {self.test_dob}")
+        print(f"   Using donor_id: {self.approved_donor_id}")
         success, response = self.run_test(
             "Donor OTP Request",
             "POST",
             "public/donor-login/request-otp",
             200,
             data={
-                "identity_type": self.test_identity_type,
-                "identity_number": self.test_identity_number,
-                "date_of_birth": self.test_dob
+                "donor_id": self.approved_donor_id
             }
         )
         if success and 'otp_for_demo' in response:
