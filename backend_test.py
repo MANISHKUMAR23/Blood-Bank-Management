@@ -142,6 +142,7 @@ class BloodBankAPITester:
             200
         )
         if success and 'donor_id' in response:
+            self.approved_donor_id = response['donor_id']  # Store the public donor ID
             self.donor_id = response['donor_internal_id']  # Use internal ID for further tests
             return True
         return False
