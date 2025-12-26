@@ -162,9 +162,7 @@ class BloodBankAPITester:
             "POST",
             "public/donor-login/request-otp",
             200,
-            data={
-                "donor_id": self.approved_donor_id
-            }
+            params={"donor_id": self.approved_donor_id}
         )
         if success and 'otp_for_demo' in response:
             self.donor_otp = response['otp_for_demo']
