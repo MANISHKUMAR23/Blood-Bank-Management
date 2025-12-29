@@ -81,15 +81,25 @@ async def create_return(
     return {"status": "success", "return_id": return_record.return_id}
 
 @return_router.get("")
-async def get_returns(current_user: dict = Depends(get_current_user)):
-    returns = await db.returns.find({}, {"_id": 0}).to_list(1000)
+async def get_returns(
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    if status == "pending":
+        query["decision"] = None
+    elif status == "accepted":
+        query["decision"] = "accept"
+    elif status == "rejected":
+        query["decision"] = "reject"
+    
+    returns = await db.returns.find(query, {"_id": 0}).to_list(1000)
     return returns
 
 @return_router.put("/{return_id}/process")
 async def process_return(
     return_id: str,
-    qc_pass: bool,
-    decision: str,
+    data: ReturnProcess,
     current_user: dict = Depends(get_current_user)
 ):
     return_record = await db.returns.find_one(
@@ -99,33 +109,70 @@ async def process_return(
     if not return_record:
         raise HTTPException(status_code=404, detail="Return record not found")
     
+    update_data = {
+        "qc_pass": data.qc_pass,
+        "decision": data.decision,
+        "processed_by": current_user["id"],
+        "processed_at": datetime.now(timezone.utc).isoformat(),
+        "qc_notes": data.qc_notes
+    }
+    
+    # If accepted with storage location, update storage assignment
+    if data.decision == "accept" and data.storage_location_id:
+        update_data["storage_location_id"] = data.storage_location_id
+        
+        # Get component to update its location
+        component = await db.components.find_one(
+            {"id": return_record["component_id"]},
+            {"_id": 0}
+        )
+        
+        if component:
+            await db.components.update_one(
+                {"id": return_record["component_id"]},
+                {
+                    "$set": {
+                        "status": UnitStatus.READY_TO_USE.value,
+                        "storage_location": data.storage_location_id,
+                        "current_location": data.storage_location_id
+                    }
+                }
+            )
+            
+            # Update storage location occupancy
+            storage = await db.storage_locations.find_one({"id": data.storage_location_id})
+            if storage:
+                await db.storage_locations.update_one(
+                    {"id": data.storage_location_id},
+                    {"$inc": {"current_occupancy": 1}}
+                )
+    else:
+        new_status = UnitStatus.READY_TO_USE.value if data.decision == "accept" else UnitStatus.DISCARDED.value
+        await db.components.update_one(
+            {"id": return_record["component_id"]},
+            {"$set": {"status": new_status}}
+        )
+    
     await db.returns.update_one(
         {"$or": [{"id": return_id}, {"return_id": return_id}]},
-        {
-            "$set": {
-                "qc_pass": qc_pass,
-                "decision": decision,
-                "processed_by": current_user["id"]
-            }
-        }
+        {"$set": update_data}
     )
     
-    new_status = UnitStatus.READY_TO_USE.value if decision == "accept" else UnitStatus.DISCARDED.value
-    await db.components.update_one(
-        {"id": return_record["component_id"]},
-        {"$set": {"status": new_status}}
-    )
-    
-    if decision == "reject":
+    # Create discard record if rejected
+    if data.decision == "reject":
         discard = Discard(
             discard_id=await generate_discard_id(),
             component_id=return_record["component_id"],
             reason=DiscardReason.REJECTED_RETURN,
-            reason_details=f"Failed return QC: {return_record.get('reason')}",
+            reason_details=f"Failed return QC: {return_record.get('reason')}. {data.qc_notes or ''}",
             discard_date=datetime.now(timezone.utc).isoformat().split("T")[0]
         )
         discard_doc = discard.model_dump()
         discard_doc['created_at'] = discard_doc['created_at'].isoformat()
+        discard_doc['category'] = 'return_rejection'
+        discard_doc['requires_authorization'] = False
+        discard_doc['authorized'] = True
+        discard_doc['authorized_by'] = current_user["id"]
         await db.discards.insert_one(discard_doc)
     
     return {"status": "success"}
