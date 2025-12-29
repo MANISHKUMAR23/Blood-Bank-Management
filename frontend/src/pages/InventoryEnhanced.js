@@ -1247,6 +1247,22 @@ export default function InventoryEnhanced() {
         onOpenChange={setShowBulkLabelDialog}
         items={selectedItems.length > 0 ? selectedItems : (storageContents?.items || [])}
       />
+
+      {/* Barcode Scanner Dialog */}
+      <BarcodeScanner 
+        open={showBarcodeScanner}
+        onOpenChange={setShowBarcodeScanner}
+        onScan={handleBarcodeScan}
+        bulkMode={bulkScanMode}
+        title={bulkScanMode ? 'Bulk Barcode Scan' : 'Scan Barcode'}
+      />
+
+      {/* Component Relationship View Dialog */}
+      <ComponentRelationshipView 
+        open={showRelationshipDialog}
+        onOpenChange={setShowRelationshipDialog}
+        itemId={relationshipItemId}
+      />
     </div>
   );
 }
