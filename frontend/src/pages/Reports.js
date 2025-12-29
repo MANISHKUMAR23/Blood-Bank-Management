@@ -150,14 +150,24 @@ export default function Reports() {
           <h1 className="page-title">Reports & Analytics</h1>
           <p className="page-subtitle">Comprehensive blood bank operational reports</p>
         </div>
-        <Button 
-          onClick={fetchAllReports}
-          variant="outline"
-          disabled={loading}
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setShowExportDialog(true)}
+            variant="outline"
+            data-testid="export-btn"
+          >
+            <FileDown className="w-4 h-4 mr-2" />
+            Export Data
+          </Button>
+          <Button 
+            onClick={fetchAllReports}
+            variant="outline"
+            disabled={loading}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="daily">
