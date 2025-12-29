@@ -27,6 +27,7 @@ import Reports from "./pages/Reports";
 import Alerts from "./pages/Alerts";
 import StorageManagement from "./pages/StorageManagement";
 import PreLabQC from "./pages/PreLabQC";
+import Logistics from "./pages/Logistics";
 import UserManagement from "./pages/UserManagement";
 import "./App.css";
 
