@@ -29,6 +29,11 @@ export default function Inventory() {
   const [inventory, setInventory] = useState(null);
   const [expiring, setExpiring] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [allUnits, setAllUnits] = useState([]);
+  const [allComponents, setAllComponents] = useState([]);
+  const [showLabelDialog, setShowLabelDialog] = useState(false);
+  const [showBulkLabelDialog, setShowBulkLabelDialog] = useState(false);
+  const [labelData, setLabelData] = useState(null);
 
   useEffect(() => {
     fetchData();
