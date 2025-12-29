@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { reportAPI } from '../lib/api';
 import { toast } from 'sonner';
-import { BarChart3, Download, Calendar, RefreshCw } from 'lucide-react';
+import { BarChart3, Download, Calendar, RefreshCw, FileDown, Users, Package, Droplet, Trash2, ClipboardList } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../components/ui/dialog';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 
 const COLORS = ['#0d9488', '#e11d48', '#6366f1', '#f59e0b', '#10b981', '#8b5cf6'];
