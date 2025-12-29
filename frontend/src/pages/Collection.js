@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { donorAPI, screeningAPI, donationAPI, labelAPI } from '../lib/api';
 import { toast } from 'sonner';
-import { Search, Droplet, Clock, CheckCircle, AlertTriangle, Printer } from 'lucide-react';
+import { 
+  Search, Droplet, Clock, CheckCircle, AlertTriangle, Printer, 
+  RefreshCw, Users, Activity, ChevronRight, Beaker, Heart
+} from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -11,16 +14,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../components/ui/checkbox';
 import { Textarea } from '../components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
+import { Badge } from '../components/ui/badge';
+import { ScrollArea } from '../components/ui/scroll-area';
 import LabelPrintDialog from '../components/LabelPrintDialog';
 
 export default function Collection() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('eligible');
+  
+  // Lists
+  const [eligibleDonors, setEligibleDonors] = useState([]);
+  const [todayDonations, setTodayDonations] = useState([]);
+  const [todaySummary, setTodaySummary] = useState(null);
+  
+  // Search
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Selected donor for collection
   const [donor, setDonor] = useState(null);
   const [screening, setScreening] = useState(null);
   const [activeDonation, setActiveDonation] = useState(null);
+  const [showCollectionForm, setShowCollectionForm] = useState(false);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [completionResult, setCompletionResult] = useState(null);
   const [showLabelDialog, setShowLabelDialog] = useState(false);
@@ -37,14 +55,33 @@ export default function Collection() {
   });
 
   useEffect(() => {
+    fetchData();
     const donorId = searchParams.get('donor');
     const screeningId = searchParams.get('screening');
     if (donorId && screeningId) {
-      fetchDonorAndScreening(donorId, screeningId);
+      fetchDonorAndStartCollection(donorId, screeningId);
     }
   }, [searchParams]);
 
-  const fetchDonorAndScreening = async (donorId, screeningId) => {
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [eligibleRes, donationsRes, summaryRes] = await Promise.all([
+        donationAPI.getEligibleDonors(),
+        donationAPI.getTodayDonations(),
+        donationAPI.getTodaySummary(),
+      ]);
+      setEligibleDonors(eligibleRes.data || []);
+      setTodayDonations(donationsRes.data || []);
+      setTodaySummary(summaryRes.data);
+    } catch (error) {
+      console.error('Failed to fetch collection data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDonorAndStartCollection = async (donorId, screeningId) => {
     try {
       const [donorRes, screeningRes] = await Promise.all([
         donorAPI.getById(donorId),
@@ -52,8 +89,9 @@ export default function Collection() {
       ]);
       setDonor(donorRes.data);
       setScreening(screeningRes.data);
+      setShowCollectionForm(true);
     } catch (error) {
-      toast.error('Failed to fetch data');
+      toast.error('Failed to fetch donor data');
     }
   };
 
@@ -74,6 +112,7 @@ export default function Collection() {
         const eligibleScreening = screeningsRes.data.find(s => s.eligibility_status === 'eligible');
         if (eligibleScreening) {
           setScreening(eligibleScreening);
+          setShowCollectionForm(true);
         } else {
           toast.warning('No eligible screening found. Please complete screening first.');
         }
@@ -85,6 +124,10 @@ export default function Collection() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleStartCollectionFromList = (eligibleDonor) => {
+    fetchDonorAndStartCollection(eligibleDonor.id, eligibleDonor.screening_id);
   };
 
   const handleStartCollection = async () => {
@@ -124,6 +167,7 @@ export default function Collection() {
       
       setCompletionResult(response.data);
       setShowCompleteDialog(true);
+      fetchData(); // Refresh lists
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to complete collection');
     } finally {
@@ -132,181 +176,400 @@ export default function Collection() {
   };
 
   const handlePrintLabel = async () => {
-    if (!completionResult?.unit_id) {
-      toast.error('No unit ID available for label');
-      return;
-    }
-    
+    if (!completionResult?.unit_id) return;
     try {
       const response = await labelAPI.getBloodUnitLabel(completionResult.unit_id);
       setLabelData(response.data);
       setShowLabelDialog(true);
     } catch (error) {
-      // Fallback to basic label data if API fails
-      setLabelData({
-        unit_id: completionResult.unit_id,
-        blood_group: screening?.preliminary_blood_group || 'Unknown',
-        component_type: 'whole_blood',
-        volume: parseFloat(completeForm.volume) || 450,
-        collection_date: new Date().toISOString().split('T')[0],
-        expiry_date: new Date(Date.now() + 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        donor_id: donor?.donor_id?.slice(-8) || 'Anonymous',
-        test_status: 'pending',
-        blood_bank_name: 'BLOODLINK BLOOD BANK',
-        warnings: [],
-      });
-      setShowLabelDialog(true);
+      toast.error('Failed to fetch label data');
     }
   };
+
+  const handleCloseForm = () => {
+    setShowCollectionForm(false);
+    setDonor(null);
+    setScreening(null);
+    setActiveDonation(null);
+    setStartForm({ donation_type: 'whole_blood' });
+    setCompleteForm({ volume: '', adverse_reaction: false, adverse_reaction_details: '' });
+  };
+
+  // Filter eligible donors by search
+  const filteredEligibleDonors = eligibleDonors.filter(d => 
+    !searchTerm || 
+    d.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.donor_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.phone?.includes(searchTerm)
+  );
 
   return (
     <div className="space-y-6 animate-fade-in" data-testid="collection-page">
       {/* Header */}
-      <div className="page-header">
-        <h1 className="page-title">Blood Collection</h1>
-        <p className="page-subtitle">Start and manage blood donation collection</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="page-title">Blood Collection</h1>
+          <p className="page-subtitle">Manage blood donation collection process</p>
+        </div>
+        <Button variant="outline" onClick={fetchData} disabled={loading}>
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
-      {/* Donor Search */}
-      {!donor && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Find Eligible Donor</CardTitle>
-            <CardDescription>Search for a donor who has passed screening</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  placeholder="Enter donor ID, name, or phone..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="pl-9"
-                  data-testid="donor-search"
-                />
+      {/* Today's Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <Card className="bg-gradient-to-br from-teal-50 to-teal-100">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-teal-600">Eligible Donors</p>
+                <p className="text-2xl font-bold text-teal-700">{eligibleDonors.length}</p>
               </div>
-              <Button onClick={handleSearch} disabled={loading} data-testid="search-btn">
-                Search
-              </Button>
+              <div className="w-12 h-12 rounded-full bg-teal-200 flex items-center justify-center">
+                <Users className="w-6 h-6 text-teal-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
-      )}
+        
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600">Today's Total</p>
+                <p className="text-2xl font-bold text-blue-700">{todaySummary?.total || 0}</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center">
+                <Activity className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-emerald-600">Completed</p>
+                <p className="text-2xl font-bold text-emerald-700">{todaySummary?.completed || 0}</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-emerald-200 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-emerald-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-amber-50 to-amber-100">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-amber-600">In Progress</p>
+                <p className="text-2xl font-bold text-amber-700">{todaySummary?.in_progress || 0}</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-amber-200 flex items-center justify-center">
+                <Clock className="w-6 h-6 text-amber-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-red-50 to-red-100">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-red-600">Total Volume</p>
+                <p className="text-2xl font-bold text-red-700">{todaySummary?.total_volume || 0} mL</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-red-200 flex items-center justify-center">
+                <Droplet className="w-6 h-6 text-red-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Selected Donor */}
-      {donor && screening && !activeDonation && (
-        <>
-          <Card className="border-l-4 border-l-emerald-500">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold">{donor.full_name}</p>
-                    <p className="text-sm text-slate-500 font-mono">{donor.donor_id}</p>
-                  </div>
-                  {screening.preliminary_blood_group && (
-                    <span className="blood-group-badge ml-4">{screening.preliminary_blood_group}</span>
-                  )}
+      {/* Search Bar */}
+      <Card className="p-4">
+        <div className="flex gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="Search by donor ID, name, or phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              className="pl-9"
+              data-testid="donor-search"
+            />
+          </div>
+          <Button onClick={handleSearch} disabled={loading} data-testid="search-btn">
+            Search
+          </Button>
+        </div>
+      </Card>
+
+      {/* Tabs for Eligible and Today's Collections */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="eligible" className="flex items-center gap-2">
+            <Heart className="w-4 h-4" />
+            Eligible ({filteredEligibleDonors.length})
+          </TabsTrigger>
+          <TabsTrigger value="today" className="flex items-center gap-2">
+            <Beaker className="w-4 h-4" />
+            Today ({todayDonations.length})
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Eligible Donors Tab */}
+        <TabsContent value="eligible" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Eligible Donors Awaiting Collection</CardTitle>
+              <CardDescription>
+                Donors who have passed screening and are ready to donate
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {filteredEligibleDonors.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">
+                  <Users className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                  <p>No eligible donors awaiting collection</p>
                 </div>
-                <Button variant="outline" onClick={() => { setDonor(null); setScreening(null); }}>
-                  Change Donor
-                </Button>
-              </div>
-              <div className="mt-4 grid grid-cols-4 gap-4 text-sm">
-                <div>
-                  <p className="text-slate-500">Screening Date</p>
-                  <p className="font-medium">{screening.screening_date}</p>
-                </div>
-                <div>
-                  <p className="text-slate-500">Hemoglobin</p>
-                  <p className="font-medium">{screening.hemoglobin} g/dL</p>
-                </div>
-                <div>
-                  <p className="text-slate-500">Weight</p>
-                  <p className="font-medium">{screening.weight} kg</p>
-                </div>
-                <div>
-                  <p className="text-slate-500">BP</p>
-                  <p className="font-medium">{screening.blood_pressure_systolic}/{screening.blood_pressure_diastolic}</p>
-                </div>
-              </div>
+              ) : (
+                <ScrollArea className="h-[400px]">
+                  <Table className="table-dense">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Donor ID</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Blood Group</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Screening Date</TableHead>
+                        <TableHead>Hemoglobin</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredEligibleDonors.map((d) => (
+                        <TableRow key={d.id} className="cursor-pointer hover:bg-slate-50">
+                          <TableCell className="font-mono text-sm">{d.donor_id}</TableCell>
+                          <TableCell className="font-medium">{d.full_name}</TableCell>
+                          <TableCell>
+                            {d.blood_group ? (
+                              <span className="blood-group-badge">{d.blood_group}</span>
+                            ) : (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm text-slate-600">{d.phone || '-'}</TableCell>
+                          <TableCell className="text-sm">{d.screening_date}</TableCell>
+                          <TableCell className="text-sm">
+                            <span className={d.hemoglobin >= 12.5 ? 'text-emerald-600' : 'text-red-600'}>
+                              {d.hemoglobin} g/dL
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {d.has_active_donation ? (
+                              <Badge className="bg-amber-100 text-amber-700">In Progress</Badge>
+                            ) : (
+                              <Badge className="bg-emerald-100 text-emerald-700">Ready</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button 
+                              size="sm" 
+                              onClick={() => handleStartCollectionFromList(d)}
+                              className="bg-teal-600 hover:bg-teal-700"
+                              disabled={d.has_active_donation}
+                            >
+                              {d.has_active_donation ? 'Continue' : 'Start Collection'}
+                              <ChevronRight className="w-4 h-4 ml-1" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Today's Collections Tab */}
+        <TabsContent value="today" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Today's Collections</CardTitle>
+              <CardDescription>
+                Donations collected on {new Date().toLocaleDateString()}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {todayDonations.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">
+                  <Droplet className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                  <p>No collections today yet</p>
+                </div>
+              ) : (
+                <ScrollArea className="h-[400px]">
+                  <Table className="table-dense">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Donation ID</TableHead>
+                        <TableHead>Donor</TableHead>
+                        <TableHead>Blood Group</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Volume</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {todayDonations.map((d) => (
+                        <TableRow key={d.id}>
+                          <TableCell className="text-sm text-slate-600">
+                            {d.collection_start_time ? new Date(d.collection_start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">{d.donation_id}</TableCell>
+                          <TableCell className="font-medium">{d.donor_name || '-'}</TableCell>
+                          <TableCell>
+                            {d.blood_group ? (
+                              <span className="blood-group-badge">{d.blood_group}</span>
+                            ) : (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="capitalize text-sm">{d.donation_type?.replace('_', ' ') || '-'}</TableCell>
+                          <TableCell className="text-sm">
+                            {d.volume_collected ? `${d.volume_collected} mL` : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={
+                              d.status === 'completed' 
+                                ? 'bg-emerald-100 text-emerald-700' 
+                                : 'bg-amber-100 text-amber-700'
+                            }>
+                              {d.status === 'completed' ? (
+                                <><CheckCircle className="w-3 h-3 mr-1" /> Completed</>
+                              ) : (
+                                <><Clock className="w-3 h-3 mr-1" /> In Progress</>
+                              )}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {d.status === 'completed' && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => navigate(`/traceability?unit=${d.donation_id}`)}
+                              >
+                                View Unit
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Collection Form Dialog */}
+      <Dialog open={showCollectionForm} onOpenChange={setShowCollectionForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Droplet className="w-5 h-5 text-red-600" />
+              Blood Collection
+            </DialogTitle>
+          </DialogHeader>
+          
+          {/* Selected Donor Info */}
+          {donor && screening && (
+            <Card className="border-l-4 border-l-emerald-500">
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">{donor.full_name}</p>
+                      <p className="text-sm text-slate-500 font-mono">{donor.donor_id}</p>
+                    </div>
+                    {(donor.blood_group || screening.preliminary_blood_group) && (
+                      <span className="blood-group-badge ml-4">{donor.blood_group || screening.preliminary_blood_group}</span>
+                    )}
+                  </div>
+                  <div className="text-right text-sm">
+                    <p className="text-slate-500">Hemoglobin</p>
+                    <p className="font-semibold text-emerald-600">{screening.hemoglobin} g/dL</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Start Collection Form */}
-          <Card className="form-section">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Droplet className="w-5 h-5 text-teal-600" />
-                Start Collection
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          {donor && screening && !activeDonation && (
+            <div className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label>Donation Type</Label>
                 <Select 
                   value={startForm.donation_type} 
                   onValueChange={(v) => setStartForm({ ...startForm, donation_type: v })}
                 >
-                  <SelectTrigger data-testid="select-donation-type">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="whole_blood">Whole Blood</SelectItem>
-                    <SelectItem value="apheresis">Apheresis</SelectItem>
+                    <SelectItem value="apheresis_platelets">Apheresis Platelets</SelectItem>
+                    <SelectItem value="apheresis_plasma">Apheresis Plasma</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <Button 
-                onClick={handleStartCollection}
-                className="w-full bg-teal-600 hover:bg-teal-700"
-                disabled={loading}
-                data-testid="start-collection-btn"
-              >
-                {loading ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                ) : (
+
+              <DialogFooter>
+                <Button variant="outline" onClick={handleCloseForm}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleStartCollection}
+                  className="bg-red-600 hover:bg-red-700"
+                  disabled={loading}
+                >
+                  {loading && <RefreshCw className="w-4 h-4 mr-2 animate-spin" />}
                   <Droplet className="w-4 h-4 mr-2" />
-                )}
-                Start Collection
-              </Button>
-            </CardContent>
-          </Card>
-        </>
-      )}
+                  Start Collection
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
 
-      {/* Active Collection */}
-      {activeDonation && (
-        <div className="space-y-6">
-          <Card className="border-l-4 border-l-amber-500 bg-amber-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center animate-pulse">
-                  <Clock className="w-6 h-6 text-amber-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-amber-700">Collection In Progress</p>
-                  <p className="text-sm text-amber-600 font-mono">{activeDonation.donation_id}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-amber-600">Started at</p>
-                  <p className="font-mono">{new Date(activeDonation.collection_start_time).toLocaleTimeString()}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Active Collection - Complete Form */}
+          {activeDonation && (
+            <div className="space-y-4 mt-4">
+              <Card className="bg-amber-50 border-amber-200">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-2 text-amber-700">
+                    <Clock className="w-5 h-5 animate-pulse" />
+                    <span className="font-medium">Collection in Progress</span>
+                    <span className="ml-auto font-mono">{activeDonation.donation_id}</span>
+                  </div>
+                </CardContent>
+              </Card>
 
-          <Card className="form-section">
-            <CardHeader>
-              <CardTitle>Complete Collection</CardTitle>
-              <CardDescription>Record the final collection details</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="volume">Volume Collected (mL) *</Label>
                 <Input
@@ -314,19 +577,18 @@ export default function Collection() {
                   type="number"
                   value={completeForm.volume}
                   onChange={(e) => setCompleteForm({ ...completeForm, volume: e.target.value })}
-                  placeholder="e.g., 450"
-                  data-testid="input-volume"
+                  placeholder="450"
+                  required
                 />
                 <p className="text-xs text-slate-500">Standard whole blood donation: 450 mL</p>
               </div>
-              
+
               <div className="pt-4 border-t">
                 <div className="flex items-start gap-3">
                   <Checkbox
                     id="adverse"
                     checked={completeForm.adverse_reaction}
                     onCheckedChange={(checked) => setCompleteForm({ ...completeForm, adverse_reaction: checked })}
-                    data-testid="checkbox-adverse"
                   />
                   <div className="grid gap-1.5 leading-none">
                     <label htmlFor="adverse" className="text-sm font-medium cursor-pointer">
@@ -348,37 +610,28 @@ export default function Collection() {
                     onChange={(e) => setCompleteForm({ ...completeForm, adverse_reaction_details: e.target.value })}
                     placeholder="Describe the adverse reaction..."
                     rows={3}
-                    data-testid="input-reaction-details"
                   />
                 </div>
               )}
 
-              <div className="flex gap-4 pt-4">
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => setActiveDonation(null)}
-                >
+              <DialogFooter className="mt-4">
+                <Button variant="outline" onClick={handleCloseForm}>
                   Cancel
                 </Button>
                 <Button 
                   onClick={handleCompleteCollection}
-                  className="flex-1 bg-teal-600 hover:bg-teal-700"
+                  className="bg-emerald-600 hover:bg-emerald-700"
                   disabled={loading || !completeForm.volume}
-                  data-testid="complete-collection-btn"
                 >
-                  {loading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  ) : (
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                  )}
+                  {loading && <RefreshCw className="w-4 h-4 mr-2 animate-spin" />}
+                  <CheckCircle className="w-4 h-4 mr-2" />
                   Complete Collection
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Completion Dialog */}
       <Dialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
@@ -424,9 +677,7 @@ export default function Collection() {
             <Button 
               onClick={() => {
                 setShowCompleteDialog(false);
-                setActiveDonation(null);
-                setDonor(null);
-                setScreening(null);
+                handleCloseForm();
               }}
               className="bg-teal-600 hover:bg-teal-700"
             >
