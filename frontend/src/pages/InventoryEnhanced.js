@@ -785,10 +785,13 @@ export default function InventoryEnhanced() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => handlePrintLabel(item)}>
+                          <Button size="sm" variant="ghost" onClick={() => handleViewRelationship(item)} title="View Relationships">
+                            <GitBranch className="w-4 h-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => handlePrintLabel(item)} title="Print Label">
                             <Printer className="w-4 h-4" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleViewAudit(item.id)}>
+                          <Button size="sm" variant="ghost" onClick={() => handleViewAudit(item.id)} title="Audit Trail">
                             <History className="w-4 h-4" />
                           </Button>
                         </div>
