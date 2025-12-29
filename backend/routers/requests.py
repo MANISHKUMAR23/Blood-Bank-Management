@@ -28,7 +28,7 @@ def calculate_priority_score(urgency: str, required_by_date: str = None, require
                 score += 30  # Tomorrow
             elif days_until <= 3:
                 score += 15  # Within 3 days
-        except:
+        except Exception:
             pass
     
     return min(score, 150)  # Cap at 150

@@ -243,7 +243,7 @@ async def get_logistics_dashboard(current_user: dict = Depends(get_current_user)
                 dispatch = datetime.fromisoformat(s["dispatch_time"].replace("Z", "+00:00"))
                 delivery = datetime.fromisoformat(s["delivery_time"].replace("Z", "+00:00"))
                 total_hours += (delivery - dispatch).total_seconds() / 3600
-            except:
+            except Exception:
                 pass
         avg_delivery_hours = total_hours / len(delivered_shipments) if delivered_shipments else 0
     
