@@ -1,6 +1,18 @@
 ---
 
 backend:
+  - task: "Enhanced Screening Page - Backend APIs"
+    implemented: true
+    working: unknown
+    file: "/app/backend/routers/screening.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: unknown
+        agent: "main"
+        comment: "New APIs added: GET /api/screenings/pending/donors (returns donors needing screening), GET /api/screenings/today/summary (returns today's screening stats). Curl tests show 31 pending donors and 2 completed screenings today."
+
   - task: "Component-Unit Relationship API"
     implemented: true
     working: true
@@ -14,6 +26,18 @@ backend:
         comment: "All relationship APIs tested successfully. GET /api/relationships/unit/{unit_id} returns proper parent_unit object, components array, and summary with total_components, volumes, and status counts. GET /api/relationships/component/{component_id} returns full parent-component relationship tree with current_component_id highlighted. GET /api/relationships/tree/{item_id} auto-detects item type correctly and returns appropriate relationship tree. All endpoints handle non-existent IDs properly with 404 responses. Tested with real data including BU-2025-000001 unit. Response structures match API specifications exactly."
 
 frontend:
+  - task: "Enhanced Screening Page - Frontend"
+    implemented: true
+    working: unknown
+    file: "/app/frontend/src/pages/Screening.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: unknown
+        agent: "main"
+        comment: "Complete page rewrite with: Summary cards (Pending, Today's Total, Eligible, Ineligible), Search bar, Tabbed interface (Pending/Completed Today), Pending donors table with Start Screening action, Completed screenings table with Proceed to Collection action, Screening form dialog with vitals and blood assessment."
+
   - task: "Component Relationship View Component"
     implemented: true
     working: true
@@ -57,12 +81,14 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus: []
+  current_focus: ["Enhanced Screening Page - Backend APIs", "Enhanced Screening Page - Frontend"]
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
+  - agent: "main"
+    message: "Enhanced Screening Page implemented with: 1) New backend APIs (/api/screenings/pending/donors, /api/screenings/today/summary), 2) Complete frontend rewrite with tabbed Pending/Completed views, summary cards, search functionality, and screening form dialog. Please test the complete screening workflow including viewing pending donors, starting a screening, and viewing completed screenings."
   - agent: "main"
     message: "Implemented Component-Unit Relationship View showing visual tree of parent blood unit and derived components. Added Barcode Scanner with html5-qrcode library supporting single and bulk scan modes. Added drag-drop functionality using @dnd-kit library for moving items between storage locations. The Relationship View is accessible from search results and storage contents table via a GitBranch icon button."
   - agent: "testing"
