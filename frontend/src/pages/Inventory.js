@@ -318,6 +318,7 @@ export default function Inventory() {
                       <TableHead>Blood Group</TableHead>
                       <TableHead>Expiry Date</TableHead>
                       <TableHead>Location</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -332,6 +333,15 @@ export default function Inventory() {
                         </TableCell>
                         <TableCell className="text-amber-600 font-medium">{item.expiry_date}</TableCell>
                         <TableCell>{item.current_location}</TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => handlePrintLabel(item, false)}
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {expiring?.expiring_components?.map((item) => (
@@ -345,6 +355,15 @@ export default function Inventory() {
                         </TableCell>
                         <TableCell className="text-amber-600 font-medium">{item.expiry_date}</TableCell>
                         <TableCell>{item.storage_location}</TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => handlePrintLabel(item, true)}
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
