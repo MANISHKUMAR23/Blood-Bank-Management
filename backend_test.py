@@ -2091,6 +2091,9 @@ def main():
         # Test Label APIs - Primary Focus
         ("Blood Pack Label APIs", tester.test_label_apis),
         
+        # Test Enhanced Inventory Management System
+        ("Enhanced Inventory Management APIs", tester.test_enhanced_inventory_apis),
+        
         # Additional verification
         ("Inventory Summary", tester.test_inventory_summary),
     ]
