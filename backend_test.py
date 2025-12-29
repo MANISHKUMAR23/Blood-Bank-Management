@@ -1680,6 +1680,178 @@ class BloodBankAPITester:
         
         return success1 and success2 and success3 and success4 and success5 and success6
 
+    def test_enhanced_screening_apis(self):
+        """Test Enhanced Screening Page APIs as per review request"""
+        print("\n🩸 Testing Enhanced Screening Page APIs...")
+        
+        # Test 1: GET /api/screenings/pending/donors - Returns list of active donors who haven't been screened today
+        success1, response1 = self.run_test(
+            "GET /api/screenings/pending/donors - Pending Donors",
+            "GET",
+            "screenings/pending/donors",
+            200
+        )
+        
+        # Validate pending donors response structure
+        if success1 and response1:
+            if isinstance(response1, list):
+                print(f"   ✅ Found {len(response1)} pending donors")
+                if len(response1) > 0:
+                    # Check structure of first donor
+                    donor = response1[0]
+                    required_keys = ['id', 'donor_id', 'full_name', 'blood_group', 'phone', 'last_screening_date', 'last_screening_status']
+                    missing_keys = [key for key in required_keys if key not in donor]
+                    if not missing_keys:
+                        print("   ✅ Pending donor structure valid")
+                    else:
+                        print(f"   ❌ Missing keys in pending donor: {missing_keys}")
+                        success1 = False
+                else:
+                    print("   ⚠️ No pending donors found")
+            else:
+                print("   ❌ Pending donors response is not a list")
+                success1 = False
+        
+        # Test 2: GET /api/screenings/today/summary - Returns summary statistics of today's screenings
+        success2, response2 = self.run_test(
+            "GET /api/screenings/today/summary - Today's Summary",
+            "GET",
+            "screenings/today/summary",
+            200
+        )
+        
+        # Validate today's summary response structure
+        if success2 and response2:
+            required_keys = ['date', 'total', 'eligible', 'ineligible']
+            missing_keys = [key for key in required_keys if key not in response2]
+            if not missing_keys:
+                print(f"   ✅ Today's summary structure valid: {response2['total']} total, {response2['eligible']} eligible, {response2['ineligible']} ineligible")
+            else:
+                print(f"   ❌ Missing keys in today's summary: {missing_keys}")
+                success2 = False
+        
+        # Test 3: GET /api/screenings?date=YYYY-MM-DD - Returns screenings for a specific date
+        today = datetime.now().strftime("%Y-%m-%d")
+        success3, response3 = self.run_test(
+            "GET /api/screenings with date filter - Screenings by Date",
+            "GET",
+            "screenings",
+            200,
+            params={"date": today}
+        )
+        
+        # Validate screenings by date response structure
+        if success3 and response3:
+            if isinstance(response3, list):
+                print(f"   ✅ Found {len(response3)} screenings for {today}")
+                if len(response3) > 0:
+                    # Check structure and donor enrichment
+                    screening = response3[0]
+                    enrichment_keys = ['donor_name', 'donor_code', 'blood_group']
+                    missing_enrichment = [key for key in enrichment_keys if key not in screening]
+                    if not missing_enrichment:
+                        print("   ✅ Screening enrichment with donor info valid")
+                    else:
+                        print(f"   ❌ Missing donor enrichment keys: {missing_enrichment}")
+                        success3 = False
+                else:
+                    print("   ⚠️ No screenings found for today")
+            else:
+                print("   ❌ Screenings response is not a list")
+                success3 = False
+        
+        # Test 4: POST /api/screenings - Create a new screening for an eligible donor
+        # First, get a pending donor to screen
+        test_donor_id = None
+        if success1 and response1 and len(response1) > 0:
+            test_donor_id = response1[0]['id']
+            print(f"   Using donor ID for screening test: {test_donor_id}")
+        
+        success4 = False
+        if test_donor_id:
+            screening_data = {
+                "donor_id": test_donor_id,
+                "screening_date": today,
+                "weight": 65.0,
+                "height": 170.0,
+                "blood_pressure_systolic": 120,
+                "blood_pressure_diastolic": 80,
+                "pulse": 72,
+                "temperature": 36.5,
+                "hemoglobin": 14.0,
+                "preliminary_blood_group": "O+",
+                "questionnaire_passed": True
+            }
+            
+            success4, response4 = self.run_test(
+                "POST /api/screenings - Create Eligible Screening",
+                "POST",
+                "screenings",
+                200,
+                data=screening_data
+            )
+            
+            # Validate screening creation response
+            if success4 and response4:
+                required_keys = ['status', 'screening_id', 'eligibility_status']
+                missing_keys = [key for key in required_keys if key not in response4]
+                if not missing_keys:
+                    print(f"   ✅ Screening created successfully: {response4['eligibility_status']}")
+                    if response4['eligibility_status'] == 'eligible':
+                        print("   ✅ Eligibility determination correct for valid vitals")
+                    else:
+                        print(f"   ⚠️ Unexpected eligibility status: {response4['eligibility_status']}")
+                        if 'rejection_reason' in response4:
+                            print(f"   Rejection reason: {response4['rejection_reason']}")
+                else:
+                    print(f"   ❌ Missing keys in screening response: {missing_keys}")
+                    success4 = False
+        else:
+            print("   ⚠️ Skipping screening creation - no pending donor available")
+            success4 = True  # Skip this test
+        
+        # Test 5: POST /api/screenings - Create a screening for an ineligible donor (test validation)
+        success5 = False
+        if test_donor_id:
+            ineligible_screening_data = {
+                "donor_id": test_donor_id,
+                "screening_date": today,
+                "weight": 40.0,  # Below minimum (45 kg)
+                "height": 170.0,
+                "blood_pressure_systolic": 200,  # Above maximum (180)
+                "blood_pressure_diastolic": 80,
+                "pulse": 72,
+                "temperature": 36.5,
+                "hemoglobin": 10.0,  # Below minimum (12.5 g/dL)
+                "preliminary_blood_group": "O+",
+                "questionnaire_passed": False  # Failed questionnaire
+            }
+            
+            success5, response5 = self.run_test(
+                "POST /api/screenings - Create Ineligible Screening",
+                "POST",
+                "screenings",
+                200,
+                data=ineligible_screening_data
+            )
+            
+            # Validate ineligible screening response
+            if success5 and response5:
+                if response5.get('eligibility_status') == 'ineligible':
+                    print("   ✅ Eligibility determination correct for invalid vitals")
+                    if 'rejection_reason' in response5:
+                        print(f"   ✅ Rejection reasons provided: {response5['rejection_reason']}")
+                    else:
+                        print("   ⚠️ Missing rejection reason for ineligible screening")
+                else:
+                    print(f"   ❌ Expected ineligible status, got: {response5.get('eligibility_status')}")
+                    success5 = False
+        else:
+            print("   ⚠️ Skipping ineligible screening test - no donor available")
+            success5 = True  # Skip this test
+        
+        return success1 and success2 and success3 and success4 and success5
+
     def test_enhanced_inventory_apis(self):
         """Test Enhanced Inventory Management System APIs"""
         print("\n📦 Testing Enhanced Inventory Management System APIs...")
