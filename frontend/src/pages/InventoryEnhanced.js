@@ -369,6 +369,97 @@ export default function InventoryEnhanced() {
     }
   };
 
+  // Handle barcode scan result
+  const handleBarcodeScan = async (result) => {
+    if (Array.isArray(result)) {
+      // Bulk scan mode - add all scanned items to selection
+      for (const barcode of result) {
+        try {
+          const response = await inventoryEnhancedAPI.locate(barcode);
+          if (response.data.found) {
+            setQuickSearchResult(response.data);
+            toast.success(`Found: ${barcode}`);
+          }
+        } catch (error) {
+          toast.error(`Not found: ${barcode}`);
+        }
+      }
+    } else {
+      // Single scan mode - search and display result
+      try {
+        const response = await inventoryEnhancedAPI.locate(result);
+        setQuickSearchResult(response.data);
+        if (!response.data.found) {
+          toast.error('Item not found');
+        }
+      } catch (error) {
+        toast.error('Search failed');
+      }
+    }
+  };
+
+  // View component-unit relationship
+  const handleViewRelationship = (item) => {
+    const itemId = item.id || item.unit_id || item.component_id;
+    setRelationshipItemId(itemId);
+    setShowRelationshipDialog(true);
+  };
+
+  // Drag and Drop handlers
+  const handleDragStart = (event) => {
+    const { active } = event;
+    setActiveId(active.id);
+    // Find the dragged item from storage contents or other sources
+    if (storageContents?.items) {
+      const item = storageContents.items.find(i => 
+        (i.id || i.unit_id || i.component_id) === active.id
+      );
+      setDraggedItem(item);
+    }
+  };
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    setActiveId(null);
+    setDraggedItem(null);
+    
+    if (!over || active.id === over.id) return;
+    
+    // Get the target storage from the droppable ID
+    const targetStorageId = over.id;
+    const itemId = active.id;
+    
+    // Find the item being dragged
+    const item = storageContents?.items?.find(i => 
+      (i.id || i.unit_id || i.component_id) === itemId
+    );
+    
+    if (!item) return;
+    
+    // Perform move operation
+    try {
+      const response = await inventoryEnhancedAPI.moveItems({
+        item_ids: [item.id || item.unit_id || item.component_id],
+        item_type: item.item_type || (item.unit_id ? 'unit' : 'component'),
+        destination_storage_id: targetStorageId,
+        reason: 'space_mgmt',
+        notes: 'Moved via drag-and-drop',
+      });
+      
+      if (response.data.moved_count > 0) {
+        toast.success(`Moved to ${response.data.destination}`);
+        fetchData();
+        if (selectedStorage) {
+          handleOpenStorage(selectedStorage);
+        }
+      } else if (response.data.failed?.length > 0) {
+        toast.error(response.data.failed[0].reason || 'Move failed');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Move failed');
+    }
+  };
+
   // Toggle item selection
   const toggleItemSelection = (item) => {
     setSelectedItems(prev => {
