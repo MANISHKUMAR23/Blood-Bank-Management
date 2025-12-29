@@ -119,6 +119,20 @@ export default function InventoryEnhanced() {
   const [showRelationshipDialog, setShowRelationshipDialog] = useState(false);
   const [relationshipItemId, setRelationshipItemId] = useState(null);
   
+  // Item Detail Panel
+  const [showItemDetailDialog, setShowItemDetailDialog] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  
+  // Advanced Search
+  const [advancedSearchLoading, setAdvancedSearchLoading] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    blood_groups: [],
+    component_types: [],
+    statuses: [],
+    expiry_from: '',
+    expiry_to: '',
+  });
+  
   // Drag and Drop
   const [activeId, setActiveId] = useState(null);
   const [draggedItem, setDraggedItem] = useState(null);
