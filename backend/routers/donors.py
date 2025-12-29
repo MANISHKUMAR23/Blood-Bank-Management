@@ -1,7 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.security import HTTPAuthorizationCredentials
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timezone, timedelta
+import os
+import uuid
+import base64
 
 import sys
 sys.path.append('..')
@@ -17,6 +20,101 @@ from services import (
 )
 
 router = APIRouter(tags=["Donors"])
+
+# File upload directory
+UPLOAD_DIR = "/app/uploads/donors"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# ==================== FILE UPLOAD ROUTES ====================
+@router.post("/donors/upload")
+async def upload_donor_file(
+    file: UploadFile = File(...),
+    file_type: str = Form(...),  # photo, id_proof, medical_report
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload a file for donor registration"""
+    allowed_types = ["photo", "id_proof", "medical_report"]
+    if file_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"File type must be one of: {allowed_types}")
+    
+    # Validate file extension
+    allowed_extensions = [".jpg", ".jpeg", ".png", ".pdf"]
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in allowed_extensions:
+        raise HTTPException(status_code=400, detail=f"File extension must be one of: {allowed_extensions}")
+    
+    # Limit file size (5MB)
+    contents = await file.read()
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size must be less than 5MB")
+    
+    # Generate unique filename
+    unique_id = str(uuid.uuid4())[:8]
+    filename = f"{file_type}_{unique_id}{file_ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+    
+    # Save file
+    with open(filepath, "wb") as f:
+        f.write(contents)
+    
+    # Return the URL path
+    file_url = f"/uploads/donors/{filename}"
+    
+    return {
+        "status": "success",
+        "file_url": file_url,
+        "file_type": file_type,
+        "filename": filename
+    }
+
+@router.post("/donors/upload-base64")
+async def upload_donor_file_base64(
+    data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload a file as base64 for donor registration"""
+    file_type = data.get("file_type")
+    file_data = data.get("file_data")
+    file_ext = data.get("file_ext", ".jpg")
+    
+    allowed_types = ["photo", "id_proof", "medical_report"]
+    if file_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"File type must be one of: {allowed_types}")
+    
+    if not file_data:
+        raise HTTPException(status_code=400, detail="file_data is required")
+    
+    # Decode base64
+    try:
+        # Remove data URL prefix if present
+        if "," in file_data:
+            file_data = file_data.split(",")[1]
+        contents = base64.b64decode(file_data)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 data")
+    
+    # Limit file size (5MB)
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size must be less than 5MB")
+    
+    # Generate unique filename
+    unique_id = str(uuid.uuid4())[:8]
+    filename = f"{file_type}_{unique_id}{file_ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+    
+    # Save file
+    with open(filepath, "wb") as f:
+        f.write(contents)
+    
+    # Return the URL path
+    file_url = f"/uploads/donors/{filename}"
+    
+    return {
+        "status": "success",
+        "file_url": file_url,
+        "file_type": file_type,
+        "filename": filename
+    }
 
 # ==================== PUBLIC DONOR ROUTES ====================
 @router.post("/public/donor-register")
