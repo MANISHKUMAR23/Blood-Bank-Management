@@ -210,9 +210,9 @@ frontend:
 
 metadata:
   created_by: "testing_agent"
-  version: "2.0"
-  test_sequence: 1
-  run_ui: false
+  version: "2.1"
+  test_sequence: 2
+  run_ui: true
 
 test_plan:
   current_focus:
