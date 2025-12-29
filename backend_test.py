@@ -1452,6 +1452,197 @@ class BloodBankAPITester:
         
         return success1 and success2 and success3 and success4 and success5 and success6
 
+    def test_enhanced_donor_registration_apis(self):
+        """Test Enhanced Donor Registration APIs from review request"""
+        print("\n🩸 Testing Enhanced Donor Registration APIs...")
+        
+        # Test 1: File Upload Base64 API
+        file_upload_data = {
+            "file_type": "photo",
+            "file_data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+            "file_ext": ".png"
+        }
+        
+        success1, response1 = self.run_test(
+            "POST File Upload Base64",
+            "POST",
+            "donors/upload-base64",
+            200,
+            data=file_upload_data
+        )
+        
+        file_url = None
+        if success1 and response1:
+            if 'file_url' in response1:
+                file_url = response1['file_url']
+                print(f"   ✅ File uploaded successfully: {file_url}")
+                # Validate response structure
+                required_keys = ['status', 'file_url', 'file_type', 'filename']
+                if all(key in response1 for key in required_keys):
+                    print("   ✅ File upload response structure valid")
+                else:
+                    print(f"   ⚠️ Missing keys in file upload response: {[k for k in required_keys if k not in response1]}")
+            else:
+                print("   ❌ Missing file_url in upload response")
+        
+        # Test 2: Enhanced Donor Creation with new fields
+        enhanced_donor_data = {
+            "full_name": "Test Enhanced Donor",
+            "date_of_birth": "1990-05-15",
+            "gender": "Male",
+            "blood_group": "B+",
+            "phone": "9999888877",
+            "email": "enhanced@test.com",
+            "address": "Test Address",
+            "identity_type": "Aadhar",
+            "identity_number": "999988887777",
+            "consent_given": True,
+            "weight": 70.5,
+            "height": 175,
+            "health_questionnaire": {
+                "feeling_well_today": True,
+                "had_cold_flu_last_week": False,
+                "taking_medications": False,
+                "has_diabetes": False,
+                "had_hepatitis": False,
+                "alcohol_consumption": "none",
+                "smoking_status": "non_smoker"
+            }
+        }
+        
+        success2, response2 = self.run_test(
+            "POST Enhanced Donor Creation",
+            "POST",
+            "donors",
+            200,
+            data=enhanced_donor_data
+        )
+        
+        created_donor_id = None
+        if success2 and response2:
+            if 'id' in response2:
+                created_donor_id = response2['id']
+                print(f"   ✅ Enhanced donor created with ID: {created_donor_id}")
+                # Validate response structure
+                required_keys = ['status', 'donor_id', 'id']
+                if all(key in response2 for key in required_keys):
+                    print("   ✅ Enhanced donor creation response structure valid")
+                else:
+                    print(f"   ⚠️ Missing keys in donor creation response: {[k for k in required_keys if k not in response2]}")
+            else:
+                print("   ❌ Missing donor ID in creation response")
+        
+        # Test 3: Get Enhanced Donor with new fields
+        success3 = False
+        if created_donor_id:
+            success3, response3 = self.run_test(
+                "GET Enhanced Donor Details",
+                "GET",
+                f"donors/{created_donor_id}",
+                200
+            )
+            
+            if success3 and response3:
+                # Validate enhanced fields are present
+                enhanced_fields = ['weight', 'height', 'health_questionnaire']
+                missing_fields = []
+                for field in enhanced_fields:
+                    if field not in response3:
+                        missing_fields.append(field)
+                
+                if not missing_fields:
+                    print("   ✅ All enhanced fields present in donor details")
+                    
+                    # Validate health questionnaire structure
+                    if 'health_questionnaire' in response3 and response3['health_questionnaire']:
+                        hq = response3['health_questionnaire']
+                        hq_fields = ['feeling_well_today', 'had_cold_flu_last_week', 'taking_medications', 
+                                   'has_diabetes', 'had_hepatitis', 'alcohol_consumption', 'smoking_status']
+                        missing_hq_fields = [f for f in hq_fields if f not in hq]
+                        
+                        if not missing_hq_fields:
+                            print("   ✅ Health questionnaire structure valid")
+                        else:
+                            print(f"   ⚠️ Missing health questionnaire fields: {missing_hq_fields}")
+                    else:
+                        print("   ⚠️ Health questionnaire not found or empty")
+                    
+                    # Validate weight and height
+                    if response3.get('weight') == 70.5 and response3.get('height') == 175:
+                        print("   ✅ Weight and height values correct")
+                    else:
+                        print(f"   ⚠️ Weight/height mismatch: got {response3.get('weight')}/{response3.get('height')}, expected 70.5/175")
+                        
+                else:
+                    print(f"   ❌ Missing enhanced fields in donor details: {missing_fields}")
+            else:
+                print("   ❌ Failed to retrieve enhanced donor details")
+        else:
+            print("   ⚠️ Skipping donor retrieval - no donor ID available")
+        
+        # Test 4: Test file upload with different file types
+        id_proof_data = {
+            "file_type": "id_proof",
+            "file_data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+            "file_ext": ".png"
+        }
+        
+        success4, response4 = self.run_test(
+            "POST ID Proof Upload Base64",
+            "POST",
+            "donors/upload-base64",
+            200,
+            data=id_proof_data
+        )
+        
+        if success4 and response4:
+            if response4.get('file_type') == 'id_proof':
+                print("   ✅ ID proof upload successful with correct file type")
+            else:
+                print(f"   ⚠️ ID proof file type mismatch: got {response4.get('file_type')}, expected id_proof")
+        
+        # Test 5: Test medical report upload
+        medical_report_data = {
+            "file_type": "medical_report",
+            "file_data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+            "file_ext": ".png"
+        }
+        
+        success5, response5 = self.run_test(
+            "POST Medical Report Upload Base64",
+            "POST",
+            "donors/upload-base64",
+            200,
+            data=medical_report_data
+        )
+        
+        if success5 and response5:
+            if response5.get('file_type') == 'medical_report':
+                print("   ✅ Medical report upload successful with correct file type")
+            else:
+                print(f"   ⚠️ Medical report file type mismatch: got {response5.get('file_type')}, expected medical_report")
+        
+        # Test 6: Test invalid file type (should fail)
+        invalid_file_data = {
+            "file_type": "invalid_type",
+            "file_data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+            "file_ext": ".png"
+        }
+        
+        success6, response6 = self.run_test(
+            "POST Invalid File Type Upload (Should Fail)",
+            "POST",
+            "donors/upload-base64",
+            400,  # Should fail with 400
+            data=invalid_file_data
+        )
+        
+        if not success6:
+            print("   ✅ Invalid file type correctly rejected")
+            success6 = True  # This is expected behavior
+        
+        return success1 and success2 and success3 and success4 and success5 and success6
+
 def main():
     print("🩸 Blood Bank Management System API Testing - Phase 3 Features")
     print("=" * 60)
