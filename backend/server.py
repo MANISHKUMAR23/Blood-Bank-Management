@@ -19,7 +19,7 @@ from routers import (
     requests_router, issuance_router, return_router, discard_router,
     reports_router, dashboard_router, alerts_router,
     storage_router, pre_lab_qc_router, notifications_router,
-    logistics_router, labels_router
+    logistics_router, labels_router, inventory_enhanced_router
 )
 
 # Configure logging
@@ -77,6 +77,7 @@ app.include_router(pre_lab_qc_router, prefix="/api")
 app.include_router(notifications_router, prefix="/api")
 app.include_router(logistics_router, prefix="/api")
 app.include_router(labels_router, prefix="/api")
+app.include_router(inventory_enhanced_router, prefix="/api")
 
 
 async def create_default_admin():
