@@ -111,6 +111,7 @@ function AppRoutes() {
         {/* Distribution */}
         <Route path="requests" element={<Requests />} />
         <Route path="distribution" element={<Distribution />} />
+        <Route path="logistics" element={<Logistics />} />
         
         {/* Returns & Discards */}
         <Route path="returns" element={<Returns />} />
