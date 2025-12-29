@@ -1,6 +1,18 @@
 ---
 
 backend:
+  - task: "Enhanced Collection Page - Backend APIs"
+    implemented: true
+    working: unknown
+    file: "/app/backend/routers/donations.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: unknown
+        agent: "main"
+        comment: "New APIs added: GET /api/donations/eligible-donors (returns donors who passed screening awaiting collection), GET /api/donations/today/summary (returns today's collection stats), GET /api/donations/today (returns today's donations with donor info)."
+
   - task: "Enhanced Screening Page - Backend APIs"
     implemented: true
     working: true
