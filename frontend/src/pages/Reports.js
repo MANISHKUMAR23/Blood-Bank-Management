@@ -21,6 +21,15 @@ export default function Reports() {
   const [discardReport, setDiscardReport] = useState(null);
   const [testingReport, setTestingReport] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportForm, setExportForm] = useState({
+    type: 'donors',
+    startDate: '',
+    endDate: '',
+    status: '',
+    bloodGroup: '',
+  });
 
   useEffect(() => {
     fetchAllReports();
