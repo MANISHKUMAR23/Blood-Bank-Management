@@ -260,8 +260,10 @@ export default function Processing() {
                           <Button
                             size="sm"
                             onClick={() => {
+                              console.log('Process button clicked for unit:', unit.unit_id);
                               setSelectedUnit(unit);
                               setShowProcessDialog(true);
+                              console.log('showProcessDialog set to true');
                             }}
                             className="bg-teal-600 hover:bg-teal-700"
                             data-testid={`process-unit-${unit.id}`}
