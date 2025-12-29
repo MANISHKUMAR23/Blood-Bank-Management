@@ -131,6 +131,34 @@ export default function Collection() {
     }
   };
 
+  const handlePrintLabel = async () => {
+    if (!completionResult?.unit_id) {
+      toast.error('No unit ID available for label');
+      return;
+    }
+    
+    try {
+      const response = await labelAPI.getBloodUnitLabel(completionResult.unit_id);
+      setLabelData(response.data);
+      setShowLabelDialog(true);
+    } catch (error) {
+      // Fallback to basic label data if API fails
+      setLabelData({
+        unit_id: completionResult.unit_id,
+        blood_group: screening?.preliminary_blood_group || 'Unknown',
+        component_type: 'whole_blood',
+        volume: parseFloat(completeForm.volume) || 450,
+        collection_date: new Date().toISOString().split('T')[0],
+        expiry_date: new Date(Date.now() + 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        donor_id: donor?.donor_id?.slice(-8) || 'Anonymous',
+        test_status: 'pending',
+        blood_bank_name: 'BLOODLINK BLOOD BANK',
+        warnings: [],
+      });
+      setShowLabelDialog(true);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in" data-testid="collection-page">
       {/* Header */}
