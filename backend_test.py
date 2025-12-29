@@ -1489,6 +1489,290 @@ class BloodBankAPITester:
         
         return success1 and success2 and success3 and success4 and success5
 
+    def test_enhanced_collection_page_apis(self):
+        """Test Enhanced Collection Page APIs as per review request"""
+        print("\n🩸 Testing Enhanced Collection Page APIs...")
+        
+        # Test 1: GET /api/donations/eligible-donors - Returns list of donors who passed screening and are ready to donate
+        success1, response1 = self.run_test(
+            "GET /api/donations/eligible-donors - Eligible Donors for Collection",
+            "GET",
+            "donations/eligible-donors",
+            200
+        )
+        
+        # Validate eligible donors response structure
+        if success1 and response1:
+            if isinstance(response1, list):
+                print(f"   ✅ Found {len(response1)} eligible donors for collection")
+                if len(response1) > 0:
+                    # Check structure of first donor
+                    donor = response1[0]
+                    required_keys = ['id', 'donor_id', 'full_name', 'blood_group', 'phone', 'screening_id', 'screening_date', 'hemoglobin', 'has_active_donation', 'active_donation_id']
+                    missing_keys = [k for k in required_keys if k not in donor]
+                    
+                    if not missing_keys:
+                        print("   ✅ Eligible donors response structure valid")
+                        print(f"   ✅ Sample donor: {donor.get('full_name')} ({donor.get('donor_id')}) - {donor.get('blood_group')} - Hb: {donor.get('hemoglobin')}")
+                        if donor.get('has_active_donation'):
+                            print(f"   ⚠️ Donor has active donation: {donor.get('active_donation_id')}")
+                    else:
+                        print(f"   ❌ Missing keys in eligible donors response: {missing_keys}")
+                        success1 = False
+                else:
+                    print("   ⚠️ No eligible donors found - this may be expected if all eligible donors have already donated")
+            else:
+                print(f"   ❌ Expected list response, got: {type(response1)}")
+                success1 = False
+        
+        # Test 2: GET /api/donations/today/summary - Returns summary of today's collections
+        success2, response2 = self.run_test(
+            "GET /api/donations/today/summary - Today's Collection Summary",
+            "GET",
+            "donations/today/summary",
+            200
+        )
+        
+        # Validate today's summary response structure
+        if success2 and response2:
+            required_keys = ['date', 'total', 'completed', 'in_progress', 'total_volume', 'adverse_reactions']
+            missing_keys = [k for k in required_keys if k not in response2]
+            
+            if not missing_keys:
+                print("   ✅ Today's collection summary structure valid")
+                print(f"   ✅ Today's stats: Total: {response2.get('total')}, Completed: {response2.get('completed')}, In Progress: {response2.get('in_progress')}")
+                print(f"   ✅ Volume collected: {response2.get('total_volume')}mL, Adverse reactions: {response2.get('adverse_reactions')}")
+                
+                # Validate data types
+                if (isinstance(response2.get('total'), int) and 
+                    isinstance(response2.get('completed'), int) and 
+                    isinstance(response2.get('in_progress'), int) and 
+                    isinstance(response2.get('total_volume'), (int, float)) and 
+                    isinstance(response2.get('adverse_reactions'), int)):
+                    print("   ✅ Summary data types are correct")
+                else:
+                    print("   ⚠️ Some summary data types are incorrect")
+            else:
+                print(f"   ❌ Missing keys in today's summary: {missing_keys}")
+                success2 = False
+        
+        # Test 3: GET /api/donations/today - Returns today's donations with donor info enrichment
+        success3, response3 = self.run_test(
+            "GET /api/donations/today - Today's Donations with Donor Info",
+            "GET",
+            "donations/today",
+            200
+        )
+        
+        # Validate today's donations response structure
+        if success3 and response3:
+            if isinstance(response3, list):
+                print(f"   ✅ Found {len(response3)} donations for today")
+                if len(response3) > 0:
+                    # Check structure of first donation
+                    donation = response3[0]
+                    required_keys = ['id', 'donor_id', 'status', 'collection_start_time']
+                    enriched_keys = ['donor_name', 'donor_code', 'blood_group']  # These should be added by enrichment
+                    
+                    missing_required = [k for k in required_keys if k not in donation]
+                    missing_enriched = [k for k in enriched_keys if k not in donation]
+                    
+                    if not missing_required:
+                        print("   ✅ Today's donations basic structure valid")
+                        if not missing_enriched:
+                            print("   ✅ Donor info enrichment working correctly")
+                            print(f"   ✅ Sample donation: {donation.get('donor_name')} ({donation.get('donor_code')}) - {donation.get('blood_group')} - Status: {donation.get('status')}")
+                        else:
+                            print(f"   ⚠️ Missing enriched donor info: {missing_enriched}")
+                    else:
+                        print(f"   ❌ Missing required keys in today's donations: {missing_required}")
+                        success3 = False
+                else:
+                    print("   ⚠️ No donations found for today - this may be expected")
+            else:
+                print(f"   ❌ Expected list response, got: {type(response3)}")
+                success3 = False
+        
+        return success1 and success2 and success3
+
+    def test_inventory_enhanced_search_api(self):
+        """Test Inventory Enhanced Search API as per review request"""
+        print("\n🔍 Testing Inventory Enhanced Search API...")
+        
+        # Test 1: Basic search without filters
+        success1, response1 = self.run_test(
+            "GET /api/inventory-enhanced/search - Basic Search",
+            "GET",
+            "inventory-enhanced/search",
+            200
+        )
+        
+        # Validate basic search response structure
+        if success1 and response1:
+            required_keys = ['items', 'total', 'page', 'page_size']
+            missing_keys = [k for k in required_keys if k not in response1]
+            
+            if not missing_keys:
+                print("   ✅ Basic search response structure valid")
+                print(f"   ✅ Found {response1.get('total')} total items, showing page {response1.get('page')} (size: {response1.get('page_size')})")
+                
+                items = response1.get('items', [])
+                if items:
+                    print(f"   ✅ Sample item: {items[0].get('item_id')} - {items[0].get('component_type', 'whole_blood')} - {items[0].get('blood_group')}")
+            else:
+                print(f"   ❌ Missing keys in basic search response: {missing_keys}")
+                success1 = False
+        
+        # Test 2: Search with blood group filter (URL encoded O+,A+)
+        success2, response2 = self.run_test(
+            "GET /api/inventory-enhanced/search - Blood Group Filter",
+            "GET",
+            "inventory-enhanced/search",
+            200,
+            params={"blood_groups": "O+,A+"}
+        )
+        
+        # Validate blood group filter
+        if success2 and response2:
+            items = response2.get('items', [])
+            print(f"   ✅ Blood group filter (O+,A+): Found {response2.get('total')} items")
+            
+            # Check if returned items have correct blood groups
+            if items:
+                valid_blood_groups = True
+                for item in items[:5]:  # Check first 5 items
+                    bg = item.get('blood_group') or item.get('confirmed_blood_group')
+                    if bg not in ['O+', 'A+']:
+                        valid_blood_groups = False
+                        print(f"   ⚠️ Unexpected blood group: {bg}")
+                        break
+                
+                if valid_blood_groups:
+                    print("   ✅ Blood group filter working correctly")
+                else:
+                    print("   ❌ Blood group filter not working properly")
+                    success2 = False
+        
+        # Test 3: Search with status filter
+        success3, response3 = self.run_test(
+            "GET /api/inventory-enhanced/search - Status Filter",
+            "GET",
+            "inventory-enhanced/search",
+            200,
+            params={"statuses": "ready_to_use"}
+        )
+        
+        # Validate status filter
+        if success3 and response3:
+            items = response3.get('items', [])
+            print(f"   ✅ Status filter (ready_to_use): Found {response3.get('total')} items")
+            
+            # Check if returned items have correct status
+            if items:
+                valid_statuses = True
+                for item in items[:5]:  # Check first 5 items
+                    status = item.get('status')
+                    if status != 'ready_to_use':
+                        valid_statuses = False
+                        print(f"   ⚠️ Unexpected status: {status}")
+                        break
+                
+                if valid_statuses:
+                    print("   ✅ Status filter working correctly")
+                else:
+                    print("   ❌ Status filter not working properly")
+                    success3 = False
+        
+        # Test 4: Search with component type filter
+        success4, response4 = self.run_test(
+            "GET /api/inventory-enhanced/search - Component Type Filter",
+            "GET",
+            "inventory-enhanced/search",
+            200,
+            params={"component_types": "whole_blood,prc"}
+        )
+        
+        # Validate component type filter
+        if success4 and response4:
+            items = response4.get('items', [])
+            print(f"   ✅ Component type filter (whole_blood,prc): Found {response4.get('total')} items")
+            
+            # Check if returned items have correct component types
+            if items:
+                valid_types = True
+                for item in items[:5]:  # Check first 5 items
+                    comp_type = item.get('component_type', 'whole_blood')
+                    if comp_type not in ['whole_blood', 'prc']:
+                        valid_types = False
+                        print(f"   ⚠️ Unexpected component type: {comp_type}")
+                        break
+                
+                if valid_types:
+                    print("   ✅ Component type filter working correctly")
+                else:
+                    print("   ❌ Component type filter not working properly")
+                    success4 = False
+        
+        # Test 5: Combined filters test
+        success5, response5 = self.run_test(
+            "GET /api/inventory-enhanced/search - Combined Filters",
+            "GET",
+            "inventory-enhanced/search",
+            200,
+            params={
+                "blood_groups": "O+,A+",
+                "statuses": "ready_to_use",
+                "component_types": "whole_blood,prc"
+            }
+        )
+        
+        # Validate combined filters
+        if success5 and response5:
+            print(f"   ✅ Combined filters: Found {response5.get('total')} items")
+            items = response5.get('items', [])
+            
+            if items:
+                # Validate first item meets all criteria
+                item = items[0]
+                bg = item.get('blood_group') or item.get('confirmed_blood_group')
+                status = item.get('status')
+                comp_type = item.get('component_type', 'whole_blood')
+                
+                criteria_met = (
+                    bg in ['O+', 'A+'] and
+                    status == 'ready_to_use' and
+                    comp_type in ['whole_blood', 'prc']
+                )
+                
+                if criteria_met:
+                    print("   ✅ Combined filters working correctly")
+                    print(f"   ✅ Sample filtered item: {item.get('item_id')} - {comp_type} - {bg} - {status}")
+                else:
+                    print(f"   ❌ Combined filters not working: {bg}, {status}, {comp_type}")
+                    success5 = False
+        
+        # Test 6: Pagination test
+        success6, response6 = self.run_test(
+            "GET /api/inventory-enhanced/search - Pagination",
+            "GET",
+            "inventory-enhanced/search",
+            200,
+            params={"page": 1, "page_size": 10}
+        )
+        
+        # Validate pagination
+        if success6 and response6:
+            items = response6.get('items', [])
+            page_size = response6.get('page_size', 0)
+            
+            if len(items) <= page_size:
+                print(f"   ✅ Pagination working: {len(items)} items returned (max {page_size})")
+            else:
+                print(f"   ❌ Pagination issue: {len(items)} items returned, expected max {page_size}")
+                success6 = False
+        
+        return success1 and success2 and success3 and success4 and success5 and success6
+
     def test_enhanced_donor_registration_apis(self):
         """Test Enhanced Donor Registration APIs from review request"""
         print("\n🩸 Testing Enhanced Donor Registration APIs...")
