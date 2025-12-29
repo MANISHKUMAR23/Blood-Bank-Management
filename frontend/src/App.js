@@ -106,7 +106,8 @@ function AppRoutes() {
         <Route path="qc-validation" element={<QCValidation />} />
         
         {/* Inventory */}
-        <Route path="inventory" element={<Inventory />} />
+        <Route path="inventory" element={<InventoryEnhanced />} />
+        <Route path="inventory-old" element={<Inventory />} />
         <Route path="storage" element={<StorageManagement />} />
         
         {/* Distribution */}
