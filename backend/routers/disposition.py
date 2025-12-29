@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timezone
+from pydantic import BaseModel
 
 import sys
 sys.path.append('..')
@@ -12,17 +13,43 @@ from services import get_current_user, generate_return_id, generate_discard_id
 return_router = APIRouter(prefix="/returns", tags=["Returns"])
 discard_router = APIRouter(prefix="/discards", tags=["Discards"])
 
+# Enhanced Return Models
+class ReturnCreate(BaseModel):
+    component_id: str
+    return_date: str
+    source: str
+    reason: str
+    hospital_name: Optional[str] = None
+    contact_person: Optional[str] = None
+    transport_conditions: Optional[str] = None
+
+class ReturnProcess(BaseModel):
+    qc_pass: bool
+    decision: str
+    storage_location_id: Optional[str] = None
+    qc_notes: Optional[str] = None
+
+# Enhanced Discard Models
+class DiscardCreate(BaseModel):
+    component_id: str
+    reason: DiscardReason
+    discard_date: str
+    reason_details: Optional[str] = None
+    category: Optional[str] = "manual"  # manual, auto_expired, auto_qc_fail
+    requires_authorization: bool = False
+
+class DiscardAuthorize(BaseModel):
+    authorized: bool
+    authorization_notes: Optional[str] = None
+
 # Returns
 @return_router.post("")
 async def create_return(
-    component_id: str,
-    return_date: str,
-    source: str,
-    reason: str,
+    data: ReturnCreate,
     current_user: dict = Depends(get_current_user)
 ):
     component = await db.components.find_one(
-        {"$or": [{"id": component_id}, {"component_id": component_id}]},
+        {"$or": [{"id": data.component_id}, {"component_id": data.component_id}]},
         {"_id": 0}
     )
     if not component:
@@ -31,13 +58,18 @@ async def create_return(
     return_record = Return(
         return_id=await generate_return_id(),
         component_id=component["id"],
-        return_date=return_date,
-        source=source,
-        reason=reason
+        return_date=data.return_date,
+        source=data.source,
+        reason=data.reason
     )
     
     doc = return_record.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
+    doc['hospital_name'] = data.hospital_name
+    doc['contact_person'] = data.contact_person
+    doc['transport_conditions'] = data.transport_conditions
+    doc['storage_location_id'] = None
+    doc['qc_notes'] = None
     
     await db.returns.insert_one(doc)
     
