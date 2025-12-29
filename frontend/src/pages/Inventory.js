@@ -411,6 +411,22 @@ export default function Inventory() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Single Label Print Dialog */}
+      <LabelPrintDialog 
+        open={showLabelDialog}
+        onOpenChange={setShowLabelDialog}
+        labelData={labelData}
+        title="Print Blood Pack Label"
+      />
+
+      {/* Bulk Label Print Dialog */}
+      <BulkLabelPrintDialog 
+        open={showBulkLabelDialog}
+        onOpenChange={setShowBulkLabelDialog}
+        items={allItemsForBulkPrint}
+        title="Bulk Print Labels"
+      />
     </div>
   );
 }
