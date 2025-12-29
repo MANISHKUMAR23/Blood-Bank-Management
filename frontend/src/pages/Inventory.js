@@ -41,14 +41,18 @@ export default function Inventory() {
 
   const fetchData = async () => {
     try {
-      const [summaryRes, inventoryRes, expiringRes] = await Promise.all([
+      const [summaryRes, inventoryRes, expiringRes, unitsRes, componentsRes] = await Promise.all([
         inventoryAPI.getSummary(),
         inventoryAPI.getByBloodGroup(),
-        inventoryAPI.getExpiring(7)
+        inventoryAPI.getExpiring(7),
+        bloodUnitAPI.getAll({ status: 'available' }),
+        componentAPI.getAll({ status: 'ready_to_use' })
       ]);
       setSummary(summaryRes.data);
       setInventory(inventoryRes.data);
       setExpiring(expiringRes.data);
+      setAllUnits(unitsRes.data || []);
+      setAllComponents(componentsRes.data || []);
     } catch (error) {
       toast.error('Failed to fetch inventory data');
     } finally {
