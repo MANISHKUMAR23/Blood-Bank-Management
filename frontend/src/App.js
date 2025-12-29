@@ -25,6 +25,8 @@ import Returns from "./pages/Returns";
 import Discards from "./pages/Discards";
 import Reports from "./pages/Reports";
 import Alerts from "./pages/Alerts";
+import StorageManagement from "./pages/StorageManagement";
+import PreLabQC from "./pages/PreLabQC";
 import UserManagement from "./pages/UserManagement";
 import "./App.css";
 
@@ -98,10 +100,12 @@ function AppRoutes() {
         <Route path="processing" element={<Processing />} />
         
         {/* QC */}
+        <Route path="pre-lab-qc" element={<PreLabQC />} />
         <Route path="qc-validation" element={<QCValidation />} />
         
         {/* Inventory */}
         <Route path="inventory" element={<Inventory />} />
+        <Route path="storage" element={<StorageManagement />} />
         
         {/* Distribution */}
         <Route path="requests" element={<Requests />} />
