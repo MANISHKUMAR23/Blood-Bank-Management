@@ -603,6 +603,10 @@ export default function InventoryEnhanced() {
               </div>
             </div>
             <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => handleViewRelationship(quickSearchResult.item)}>
+                <GitBranch className="w-4 h-4 mr-1" />
+                Relationships
+              </Button>
               <Button size="sm" variant="outline" onClick={() => handleViewAudit(quickSearchResult.item?.id)}>
                 <History className="w-4 h-4 mr-1" />
                 Audit Trail
