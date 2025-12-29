@@ -256,4 +256,11 @@ export const utilityAPI = {
   getQRCode: (data) => api.get(`/qrcode/${data}`),
 };
 
+// Label Printing APIs
+export const labelAPI = {
+  getBloodUnitLabel: (unitId) => api.get(`/labels/blood-unit/${unitId}`),
+  getComponentLabel: (componentId) => api.get(`/labels/component/${componentId}`),
+  getBulkLabels: (unitIds = [], componentIds = []) => api.post('/labels/bulk', { unit_ids: unitIds, component_ids: componentIds }),
+};
+
 export default api;
