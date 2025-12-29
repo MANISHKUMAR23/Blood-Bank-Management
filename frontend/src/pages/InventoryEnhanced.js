@@ -1582,3 +1582,104 @@ function StatusView({ data, selectedItems, onToggleSelect, onPrintLabel, onViewA
     </Tabs>
   );
 }
+
+// Droppable Storage Card for Drag-and-Drop
+function DroppableStorageCard({ storage, onOpenStorage }) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: storage.id,
+  });
+
+  return (
+    <Card 
+      ref={setNodeRef}
+      className={`cursor-pointer transition-all ${
+        isOver 
+          ? 'ring-2 ring-teal-400 ring-offset-2 shadow-lg bg-teal-50' 
+          : 'hover:shadow-lg'
+      }`}
+      onClick={() => onOpenStorage(storage)}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">{storage.storage_name}</CardTitle>
+          <Badge variant="outline" className="capitalize">{storage.storage_type}</Badge>
+        </div>
+        <CardDescription>{storage.location_code}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {/* Occupancy Bar */}
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span>Occupancy</span>
+              <span className={storage.occupancy_percent >= 90 ? 'text-red-600 font-bold' : ''}>
+                {storage.current_occupancy}/{storage.capacity} ({storage.occupancy_percent}%)
+              </span>
+            </div>
+            <Progress 
+              value={storage.occupancy_percent} 
+              className={`h-2 ${getOccupancyColor(storage.occupancy_percent)}`}
+            />
+          </div>
+          
+          {/* Quick Stats */}
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="p-2 bg-slate-50 rounded">
+              <div className="font-bold">{storage.units_count}</div>
+              <div className="text-slate-500">Units</div>
+            </div>
+            <div className="p-2 bg-slate-50 rounded">
+              <div className="font-bold">{storage.components_count}</div>
+              <div className="text-slate-500">Components</div>
+            </div>
+            <div className={`p-2 rounded ${storage.expiring_count > 0 ? 'bg-amber-50' : 'bg-slate-50'}`}>
+              <div className={`font-bold ${storage.expiring_count > 0 ? 'text-amber-600' : ''}`}>
+                {storage.expiring_count}
+              </div>
+              <div className="text-slate-500">Expiring</div>
+            </div>
+          </div>
+          
+          {/* Temperature */}
+          {(storage.temp_min !== null || storage.temp_max !== null) && (
+            <div className="flex items-center gap-1 text-xs text-slate-500">
+              <Thermometer className="w-3 h-3" />
+              {storage.temp_min}°C to {storage.temp_max}°C
+            </div>
+          )}
+          
+          {/* Drop indicator */}
+          {isOver && (
+            <div className="text-center py-2 text-teal-600 text-sm font-medium animate-pulse">
+              Drop here to move
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Draggable Item Row for tables
+function DraggableItemRow({ item, children }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: item.id || item.unit_id || item.component_id,
+  });
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    opacity: isDragging ? 0.5 : 1,
+  } : undefined;
+
+  return (
+    <tr 
+      ref={setNodeRef} 
+      style={style} 
+      {...listeners} 
+      {...attributes}
+      className={isDragging ? 'bg-teal-100' : ''}
+    >
+      {children}
+    </tr>
+  );
+}
