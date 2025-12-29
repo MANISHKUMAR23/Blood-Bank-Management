@@ -182,29 +182,18 @@ export default function Processing() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="page-title">Component Processing</h1>
-          <p className="page-subtitle">Process blood units into components</p>
+          <p className="page-subtitle">Process blood units into multiple components</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchData} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          {selectedUnits.length > 0 && (
-            <Button 
-              className="bg-teal-600 hover:bg-teal-700"
-              onClick={() => setShowBatchDialog(true)}
-            >
-              <Layers className="w-4 h-4 mr-2" />
-              Batch Process ({selectedUnits.length})
-            </Button>
-          )}
-        </div>
+        <Button variant="outline" onClick={fetchData} disabled={loading}>
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       <Tabs defaultValue="process">
         <TabsList>
           <TabsTrigger value="process">Process Units</TabsTrigger>
-          <TabsTrigger value="components">Components</TabsTrigger>
+          <TabsTrigger value="components">Components ({components.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="process" className="mt-4 space-y-4">
@@ -230,7 +219,7 @@ export default function Processing() {
           <Card>
             <CardHeader>
               <CardTitle>Units Ready for Processing</CardTitle>
-              <CardDescription>Blood units that have passed lab testing</CardDescription>
+              <CardDescription>Blood units that have passed lab testing - click Process to create multiple components</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -245,13 +234,6 @@ export default function Processing() {
                 <Table className="table-dense">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10">
-                        <Checkbox
-                          checked={selectedUnits.length === filteredUnits.length && filteredUnits.length > 0}
-                          onCheckedChange={toggleSelectAll}
-                          data-testid="select-all-checkbox"
-                        />
-                      </TableHead>
                       <TableHead>Unit ID</TableHead>
                       <TableHead>Blood Group</TableHead>
                       <TableHead>Volume</TableHead>
@@ -260,49 +242,36 @@ export default function Processing() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUnits.map((unit) => {
-                      const isSelected = selectedUnits.some(u => u.id === unit.id);
-                      return (
-                        <TableRow 
-                          key={unit.id} 
-                          className={`data-table-row ${isSelected ? 'bg-teal-50 dark:bg-teal-900/20' : ''}`}
-                        >
-                          <TableCell>
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={() => toggleSelectUnit(unit)}
-                              data-testid={`select-unit-${unit.id}`}
-                            />
-                          </TableCell>
-                          <TableCell className="font-mono">{unit.unit_id}</TableCell>
-                          <TableCell>
-                            {unit.confirmed_blood_group ? (
-                              <span className="blood-group-badge">{unit.confirmed_blood_group}</span>
-                            ) : unit.blood_group ? (
-                              <span className="blood-group-badge">{unit.blood_group}</span>
-                            ) : (
-                              <span className="text-slate-400">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell>{unit.volume} mL</TableCell>
-                          <TableCell>{unit.collection_date}</TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setSelectedUnit(unit);
-                                setShowProcessDialog(true);
-                              }}
-                              className="bg-teal-600 hover:bg-teal-700"
-                              data-testid={`process-unit-${unit.id}`}
-                            >
-                              <Layers className="w-4 h-4 mr-1" />
-                              Process
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                    {filteredUnits.map((unit) => (
+                      <TableRow key={unit.id} className="data-table-row">
+                        <TableCell className="font-mono">{unit.unit_id}</TableCell>
+                        <TableCell>
+                          {unit.confirmed_blood_group ? (
+                            <span className="blood-group-badge">{unit.confirmed_blood_group}</span>
+                          ) : unit.blood_group ? (
+                            <span className="blood-group-badge">{unit.blood_group}</span>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>{unit.volume} mL</TableCell>
+                        <TableCell>{unit.collection_date}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSelectedUnit(unit);
+                              setShowProcessDialog(true);
+                            }}
+                            className="bg-teal-600 hover:bg-teal-700"
+                            data-testid={`process-unit-${unit.id}`}
+                          >
+                            <Layers className="w-4 h-4 mr-1" />
+                            Process
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               )}
@@ -326,6 +295,7 @@ export default function Processing() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Component ID</TableHead>
+                      <TableHead>Parent Unit</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Blood Group</TableHead>
                       <TableHead>Volume</TableHead>
@@ -337,7 +307,8 @@ export default function Processing() {
                   <TableBody>
                     {components.map((comp) => (
                       <TableRow key={comp.id} className="data-table-row">
-                        <TableCell className="font-mono">{comp.component_id}</TableCell>
+                        <TableCell className="font-mono text-xs">{comp.component_id}</TableCell>
+                        <TableCell className="font-mono text-xs">{comp.parent_unit_id?.slice(-8) || '-'}</TableCell>
                         <TableCell className="capitalize">{comp.component_type?.replace('_', ' ')}</TableCell>
                         <TableCell>
                           {comp.blood_group && (
@@ -362,87 +333,141 @@ export default function Processing() {
         </TabsContent>
       </Tabs>
 
-      {/* Process Dialog */}
+      {/* Multi-Component Process Dialog */}
       <Dialog open={showProcessDialog} onOpenChange={(open) => { setShowProcessDialog(open); if (!open) resetForm(); }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Layers className="w-5 h-5 text-teal-600" />
-              Create Component
+              Process Blood Unit into Components
             </DialogTitle>
+            <DialogDescription>
+              Select multiple component types to create from this blood unit
+            </DialogDescription>
           </DialogHeader>
           
           {selectedUnit && (
-            <div className="py-2 px-3 bg-slate-50 rounded-lg mb-4">
-              <p className="text-sm text-slate-500">Parent Unit</p>
-              <p className="font-mono font-medium">{selectedUnit.unit_id}</p>
-              {selectedUnit.confirmed_blood_group && (
-                <span className="blood-group-badge mt-1">{selectedUnit.confirmed_blood_group}</span>
-              )}
+            <div className="py-3 px-4 bg-slate-50 dark:bg-slate-800 rounded-lg mb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-500">Parent Blood Unit</p>
+                  <p className="font-mono font-medium text-lg">{selectedUnit.unit_id}</p>
+                </div>
+                <div className="text-right">
+                  <span className="blood-group-badge text-lg px-3 py-1">
+                    {selectedUnit.confirmed_blood_group || selectedUnit.blood_group}
+                  </span>
+                  <p className="text-sm text-slate-500 mt-1">Volume: {selectedUnit.volume} mL</p>
+                </div>
+              </div>
             </div>
           )}
           
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Component Type *</Label>
-              <Select 
-                value={processForm.component_type}
-                onValueChange={(v) => setProcessForm({ ...processForm, component_type: v })}
-              >
-                <SelectTrigger data-testid="select-component-type">
-                  <SelectValue placeholder="Select component type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {componentTypes.map(c => (
-                    <SelectItem key={c.value} value={c.value}>
-                      <div>
-                        <p>{c.label}</p>
-                        <p className="text-xs text-slate-500">{c.temp} | {c.expiry} days shelf life</p>
+            {/* Component Selection with Checkboxes */}
+            <div>
+              <Label className="text-base font-medium mb-3 block">Select Components to Create *</Label>
+              <div className="space-y-3">
+                {componentTypes.map((comp) => {
+                  const isSelected = selectedComponents.includes(comp.value);
+                  return (
+                    <div 
+                      key={comp.value}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        isSelected 
+                          ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20' 
+                          : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id={`comp-${comp.value}`}
+                          checked={isSelected}
+                          onCheckedChange={() => toggleComponentSelection(comp.value)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <label 
+                            htmlFor={`comp-${comp.value}`}
+                            className="font-medium cursor-pointer block"
+                          >
+                            {comp.label}
+                          </label>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {comp.temp} • {comp.expiry} days shelf life
+                          </p>
+                          
+                          {isSelected && (
+                            <div className="mt-3 grid grid-cols-2 gap-3">
+                              <div>
+                                <Label className="text-xs">Volume (mL) *</Label>
+                                <Input
+                                  type="number"
+                                  value={componentVolumes[comp.value] || ''}
+                                  onChange={(e) => handleVolumeChange(comp.value, e.target.value)}
+                                  placeholder={`Default: ${comp.defaultVolume}`}
+                                  className="mt-1 h-9"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs">Storage Location</Label>
+                                <Select 
+                                  value={componentStorages[comp.value] || ''}
+                                  onValueChange={(v) => handleStorageChange(comp.value, v)}
+                                >
+                                  <SelectTrigger className="mt-1 h-9">
+                                    <SelectValue placeholder="Select storage" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {storageLocations.map(loc => (
+                                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="volume">Volume (mL) *</Label>
+            {/* Batch ID */}
+            <div>
+              <Label htmlFor="batch-id">Batch ID (Optional - applies to all)</Label>
               <Input
-                id="volume"
-                type="number"
-                value={processForm.volume}
-                onChange={(e) => setProcessForm({ ...processForm, volume: e.target.value })}
-                placeholder="e.g., 250"
-                data-testid="input-volume"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Storage Location</Label>
-              <Select 
-                value={processForm.storage_location}
-                onValueChange={(v) => setProcessForm({ ...processForm, storage_location: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select storage location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {storageLocations.map(loc => (
-                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="batch">Batch ID (Optional)</Label>
-              <Input
-                id="batch"
-                value={processForm.batch_id}
-                onChange={(e) => setProcessForm({ ...processForm, batch_id: e.target.value })}
+                id="batch-id"
+                value={batchId}
+                onChange={(e) => setBatchId(e.target.value)}
                 placeholder="Enter batch ID"
+                className="mt-1"
               />
             </div>
+
+            {/* Summary */}
+            {selectedComponents.length > 0 && (
+              <div className="p-4 bg-teal-50 dark:bg-teal-900/20 rounded-lg border border-teal-200 dark:border-teal-800">
+                <p className="font-medium text-teal-700 dark:text-teal-300">
+                  Creating {selectedComponents.length} component(s)
+                </p>
+                <p className="text-sm text-teal-600 dark:text-teal-400 mt-1">
+                  Total volume: {getTotalVolume()} mL
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedComponents.map(comp => {
+                    const type = componentTypes.find(c => c.value === comp);
+                    return (
+                      <Badge key={comp} className="bg-teal-100 text-teal-700">
+                        {type?.label} ({componentVolumes[comp] || 0} mL)
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="mt-6">
@@ -450,104 +475,29 @@ export default function Processing() {
               Cancel
             </Button>
             <Button 
-              onClick={handleCreateComponent}
+              onClick={handleCreateMultipleComponents}
               className="bg-teal-600 hover:bg-teal-700"
-              disabled={!processForm.component_type || !processForm.volume}
-              data-testid="create-component-btn"
+              disabled={selectedComponents.length === 0 || processing}
+              data-testid="create-components-btn"
             >
-              <Plus className="w-4 h-4 mr-1" />
-              Create Component
+              {processing ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Create {selectedComponents.length} Component(s)
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Batch Process Dialog */}
-      <Dialog open={showBatchDialog} onOpenChange={(open) => { setShowBatchDialog(open); if (!open) resetForm(); }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Layers className="w-5 h-5 text-teal-600" />
-              Batch Component Processing
-            </DialogTitle>
-            <DialogDescription>
-              Create the same component type for {selectedUnits.length} selected units
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-2 px-3 bg-slate-50 rounded-lg mb-4 max-h-32 overflow-y-auto">
-            <p className="text-sm text-slate-500 mb-2">Selected Units ({selectedUnits.length})</p>
-            <div className="flex flex-wrap gap-2">
-              {selectedUnits.map(unit => (
-                <Badge key={unit.id} variant="outline" className="font-mono">
-                  {unit.unit_id}
-                  <span className="ml-1 text-xs text-teal-600">{unit.confirmed_blood_group || unit.blood_group}</span>
-                </Badge>
-              ))}
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Component Type *</Label>
-              <Select 
-                value={processForm.component_type}
-                onValueChange={(v) => setProcessForm({ ...processForm, component_type: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select component type for all" />
-                </SelectTrigger>
-                <SelectContent>
-                  {componentTypes.map(c => (
-                    <SelectItem key={c.value} value={c.value}>
-                      <div>
-                        <p>{c.label}</p>
-                        <p className="text-xs text-slate-500">{c.temp} | {c.expiry} days shelf life</p>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="batch-volume">Volume (mL) per component *</Label>
-              <Input
-                id="batch-volume"
-                type="number"
-                value={processForm.volume}
-                onChange={(e) => setProcessForm({ ...processForm, volume: e.target.value })}
-                placeholder="e.g., 250"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Storage Location</Label>
-              <Select 
-                value={processForm.storage_location}
-                onValueChange={(v) => setProcessForm({ ...processForm, storage_location: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select storage location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {storageLocations.map(loc => (
-                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="batch-id">Batch ID (Optional)</Label>
-              <Input
-                id="batch-id"
-                value={processForm.batch_id}
-                onChange={(e) => setProcessForm({ ...processForm, batch_id: e.target.value })}
-                placeholder="Enter batch ID"
-              />
-            </div>
-          </div>
+    </div>
+  );
+}
 
           <DialogFooter className="mt-6">
             <Button variant="outline" onClick={() => { setShowBatchDialog(false); resetForm(); }}>
