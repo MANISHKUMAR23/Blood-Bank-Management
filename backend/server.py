@@ -17,7 +17,8 @@ from routers import (
     donations_router, blood_units_router, custody_router, laboratory_router,
     components_router, quarantine_router, qc_validation_router, inventory_router,
     requests_router, issuance_router, return_router, discard_router,
-    reports_router, dashboard_router, alerts_router
+    reports_router, dashboard_router, alerts_router,
+    storage_router, pre_lab_qc_router, notifications_router
 )
 
 # Configure logging
