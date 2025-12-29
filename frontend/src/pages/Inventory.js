@@ -77,6 +77,25 @@ export default function Inventory() {
     return acc;
   }, []);
 
+  // Handle single item print label
+  const handlePrintLabel = async (item, isComponent = false) => {
+    try {
+      const response = isComponent 
+        ? await labelAPI.getComponentLabel(item.component_id || item.id)
+        : await labelAPI.getBloodUnitLabel(item.unit_id || item.id);
+      setLabelData(response.data);
+      setShowLabelDialog(true);
+    } catch (error) {
+      toast.error('Failed to fetch label data');
+    }
+  };
+
+  // Combine all items for bulk printing
+  const allItemsForBulkPrint = [
+    ...allUnits.map(u => ({ ...u, _type: 'unit' })),
+    ...allComponents.map(c => ({ ...c, _type: 'component' }))
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -88,9 +107,25 @@ export default function Inventory() {
   return (
     <div className="space-y-6 animate-fade-in" data-testid="inventory-page">
       {/* Header */}
-      <div className="page-header">
-        <h1 className="page-title">Inventory Management</h1>
-        <p className="page-subtitle">Blood stock monitoring and storage management</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="page-title">Inventory Management</h1>
+          <p className="page-subtitle">Blood stock monitoring and storage management</p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowBulkLabelDialog(true)}
+            disabled={allItemsForBulkPrint.length === 0}
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Bulk Print Labels
+          </Button>
+          <Button variant="outline" onClick={fetchData} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
