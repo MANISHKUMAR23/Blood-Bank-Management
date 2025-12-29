@@ -104,14 +104,41 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 animate-fade-in" data-testid="dashboard">
       {/* Header */}
-      <div className="page-header">
-        <h1 className="page-title">Welcome back, {user?.full_name}</h1>
-        <p className="page-subtitle">{roleLabels[user?.role]} Dashboard - Overview of blood bank operations</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="page-title">Welcome back, {user?.full_name}</h1>
+          <p className="page-subtitle">{roleLabels[user?.role]} Dashboard - Overview of blood bank operations</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Button
+              variant={autoRefresh ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              className={autoRefresh ? "bg-teal-600" : ""}
+            >
+              <Zap className={`w-4 h-4 mr-1 ${autoRefresh ? 'animate-pulse' : ''}`} />
+              {autoRefresh ? 'Live' : 'Paused'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+          {lastUpdated && (
+            <span className="text-xs text-slate-500">
+              Updated: {lastUpdated.toLocaleTimeString()}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Clickable */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="card-stat" data-testid="stat-donations">
+        <Card 
+          className="card-stat cursor-pointer hover:shadow-lg transition-shadow" 
+          data-testid="stat-donations"
+          onClick={() => navigate('/collection')}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -122,10 +149,15 @@ export default function Dashboard() {
                 <Droplet className="w-6 h-6 text-teal-600 dark:text-teal-400" />
               </div>
             </div>
+            <p className="text-xs text-teal-600 mt-2">Click to view collections →</p>
           </CardContent>
         </Card>
 
-        <Card className="card-stat" data-testid="stat-donors">
+        <Card 
+          className="card-stat cursor-pointer hover:shadow-lg transition-shadow" 
+          data-testid="stat-donors"
+          onClick={() => navigate('/donors')}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -136,10 +168,15 @@ export default function Dashboard() {
                 <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
+            <p className="text-xs text-blue-600 mt-2">Click to manage donors →</p>
           </CardContent>
         </Card>
 
-        <Card className="card-stat" data-testid="stat-available">
+        <Card 
+          className="card-stat cursor-pointer hover:shadow-lg transition-shadow" 
+          data-testid="stat-available"
+          onClick={() => navigate('/inventory')}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -150,10 +187,15 @@ export default function Dashboard() {
                 <Package className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
+            <p className="text-xs text-emerald-600 mt-2">Click to view inventory →</p>
           </CardContent>
         </Card>
 
-        <Card className="card-stat" data-testid="stat-pending">
+        <Card 
+          className="card-stat cursor-pointer hover:shadow-lg transition-shadow" 
+          data-testid="stat-pending"
+          onClick={() => navigate('/requests')}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -164,6 +206,7 @@ export default function Dashboard() {
                 <ClipboardList className="w-6 h-6 text-amber-600 dark:text-amber-400" />
               </div>
             </div>
+            <p className="text-xs text-amber-600 mt-2">Click to view requests →</p>
           </CardContent>
         </Card>
       </div>
