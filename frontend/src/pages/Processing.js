@@ -330,6 +330,7 @@ export default function Processing() {
                       <TableHead>Storage</TableHead>
                       <TableHead>Expiry</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -350,6 +351,16 @@ export default function Processing() {
                           <Badge className={statusColors[comp.status]}>
                             {comp.status?.replace('_', ' ')}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => handlePrintLabel(comp)}
+                            title="Print Label"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
