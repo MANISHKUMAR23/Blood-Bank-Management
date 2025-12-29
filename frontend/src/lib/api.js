@@ -263,4 +263,40 @@ export const labelAPI = {
   getBulkLabels: (unitIds = [], componentIds = []) => api.post('/labels/bulk', { unit_ids: unitIds, component_ids: componentIds }),
 };
 
+// Enhanced Inventory APIs
+export const inventoryEnhancedAPI = {
+  // Dashboard views
+  getByStorage: () => api.get('/inventory-enhanced/dashboard/by-storage'),
+  getByBloodGroup: () => api.get('/inventory-enhanced/dashboard/by-blood-group'),
+  getByComponentType: () => api.get('/inventory-enhanced/dashboard/by-component-type'),
+  getByExpiry: () => api.get('/inventory-enhanced/dashboard/by-expiry'),
+  getByStatus: () => api.get('/inventory-enhanced/dashboard/by-status'),
+  
+  // Storage contents
+  getStorageContents: (storageId, params) => api.get(`/inventory-enhanced/storage/${storageId}/contents`, { params }),
+  
+  // Move/Transfer
+  moveItems: (data) => api.post('/inventory-enhanced/move', data),
+  validateMove: (params) => api.get('/inventory-enhanced/move/validate', { params }),
+  
+  // Search
+  search: (params) => api.get('/inventory-enhanced/search', { params }),
+  locate: (itemId) => api.get(`/inventory-enhanced/locate/${itemId}`),
+  
+  // Reserve
+  reserveItems: (data) => api.post('/inventory-enhanced/reserve', data),
+  releaseReservation: (itemId, itemType) => api.post(`/inventory-enhanced/reserve/${itemId}/release`, null, { params: { item_type: itemType } }),
+  getReservedItems: () => api.get('/inventory-enhanced/reserved'),
+  autoReleaseExpired: () => api.post('/inventory-enhanced/reserve/auto-release'),
+  
+  // Reports
+  getStockReport: () => api.get('/inventory-enhanced/reports/stock'),
+  getMovementReport: (params) => api.get('/inventory-enhanced/reports/movement', { params }),
+  getExpiryAnalysis: () => api.get('/inventory-enhanced/reports/expiry-analysis'),
+  getStorageUtilization: () => api.get('/inventory-enhanced/reports/storage-utilization'),
+  
+  // Audit
+  getAuditTrail: (itemId) => api.get(`/inventory-enhanced/audit/${itemId}`),
+};
+
 export default api;
