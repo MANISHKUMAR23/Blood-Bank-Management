@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import {
   Users, Droplet, Clipboard, FlaskConical, Layers, ShieldCheck,
   Package, ClipboardList, Truck, RotateCcw, Trash2, BarChart3,
-  Settings, LogOut, Menu, X, Sun, Moon, Home, Microscope, UserPlus, Bell
+  Settings, LogOut, Menu, X, Sun, Moon, Home, Microscope, UserPlus, Bell,
+  Warehouse, ClipboardCheck
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -16,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+import NotificationBell from './NotificationBell';
 
 const roleLabels = {
   admin: 'Administrator',
@@ -35,10 +37,12 @@ const navItems = [
   { path: '/screening', icon: Clipboard, label: 'Screening', roles: ['admin', 'registration', 'phlebotomist'] },
   { path: '/collection', icon: Droplet, label: 'Collection', roles: ['admin', 'phlebotomist'] },
   { path: '/traceability', icon: Microscope, label: 'Traceability', roles: ['admin', 'lab_tech', 'processing', 'qc_manager'] },
+  { path: '/pre-lab-qc', icon: ClipboardCheck, label: 'Pre-Lab QC', roles: ['admin', 'lab_tech', 'qc_manager'] },
   { path: '/laboratory', icon: FlaskConical, label: 'Laboratory', roles: ['admin', 'lab_tech'] },
   { path: '/processing', icon: Layers, label: 'Processing', roles: ['admin', 'processing'] },
   { path: '/qc-validation', icon: ShieldCheck, label: 'QC Validation', roles: ['admin', 'qc_manager'] },
   { path: '/inventory', icon: Package, label: 'Inventory', roles: ['admin', 'inventory', 'distribution'] },
+  { path: '/storage', icon: Warehouse, label: 'Storage', roles: ['admin', 'inventory'] },
   { path: '/requests', icon: ClipboardList, label: 'Requests', roles: ['admin', 'inventory', 'distribution'] },
   { path: '/distribution', icon: Truck, label: 'Distribution', roles: ['admin', 'distribution'] },
   { path: '/returns', icon: RotateCcw, label: 'Returns', roles: ['admin', 'inventory', 'qc_manager'] },
@@ -143,6 +147,7 @@ export default function Layout() {
             </div>
 
             <div className="flex items-center gap-4">
+              <NotificationBell />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2" data-testid="user-menu">
