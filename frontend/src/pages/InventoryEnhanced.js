@@ -1273,7 +1273,7 @@ export default function InventoryEnhanced() {
 // ============ VIEW COMPONENTS ============
 
 function StorageView({ data, displayMode, onOpenStorage }) {
-  if (!data || data.length === 0) {
+  if (!data || !Array.isArray(data) || data.length === 0) {
     return <div className="text-center py-8 text-slate-500">No storage locations found</div>;
   }
 
