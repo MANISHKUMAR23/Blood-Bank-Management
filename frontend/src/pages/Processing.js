@@ -171,6 +171,17 @@ export default function Processing() {
     }, 0);
   };
 
+  // Handle print label for component
+  const handlePrintLabel = async (component) => {
+    try {
+      const response = await labelAPI.getComponentLabel(component.component_id || component.id);
+      setLabelData(response.data);
+      setShowLabelDialog(true);
+    } catch (error) {
+      toast.error('Failed to fetch label data');
+    }
+  };
+
   const filteredUnits = units.filter(u => 
     !searchTerm || 
     u.unit_id?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -191,8 +202,17 @@ export default function Processing() {
           <h1 className="page-title">Component Processing</h1>
           <p className="page-subtitle">Process blood units into multiple components</p>
         </div>
-        <Button variant="outline" onClick={fetchData} disabled={loading}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowBulkLabelDialog(true)}
+            disabled={components.length === 0}
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            Bulk Print Labels
+          </Button>
+          <Button variant="outline" onClick={fetchData} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
