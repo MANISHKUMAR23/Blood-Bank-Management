@@ -193,6 +193,37 @@ export const alertsAPI = {
   getUrgentRequests: () => api.get('/alerts/urgent-requests'),
 };
 
+// Storage Management APIs
+export const storageAPI = {
+  getAll: (params) => api.get('/storage', { params }),
+  getSummary: () => api.get('/storage/summary'),
+  getOne: (id) => api.get(`/storage/${id}`),
+  create: (data) => api.post('/storage', data),
+  update: (id, data) => api.put(`/storage/${id}`, data),
+  assignItem: (storageId, itemId, itemType) => api.post(`/storage/${storageId}/assign`, null, { params: { item_id: itemId, item_type: itemType } }),
+  transferItems: (storageId, data) => api.post(`/storage/${storageId}/transfer`, data),
+};
+
+// Pre-Lab QC APIs
+export const preLabQCAPI = {
+  getAll: (params) => api.get('/pre-lab-qc', { params }),
+  getPending: () => api.get('/pre-lab-qc/pending'),
+  getOne: (id) => api.get(`/pre-lab-qc/${id}`),
+  getByUnit: (unitId) => api.get(`/pre-lab-qc/unit/${unitId}`),
+  create: (data) => api.post('/pre-lab-qc', data),
+};
+
+// Notifications APIs
+export const notificationAPI = {
+  getAll: (params) => api.get('/notifications', { params }),
+  getUnreadCount: () => api.get('/notifications/count'),
+  markAsRead: (id) => api.put(`/notifications/${id}/read`),
+  markAllAsRead: () => api.put('/notifications/read-all'),
+  create: (data) => api.post('/notifications', data),
+  delete: (id) => api.delete(`/notifications/${id}`),
+  generateAlerts: () => api.post('/notifications/generate-alerts'),
+};
+
 // Utility APIs
 export const utilityAPI = {
   getBarcode: (data) => api.get(`/barcode/${data}`),
