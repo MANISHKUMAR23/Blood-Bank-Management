@@ -93,6 +93,9 @@ export const donationAPI = {
   create: (data) => api.post('/donations', data),
   getAll: (params) => api.get('/donations', { params }),
   complete: (id, data) => api.put(`/donations/${id}/complete`, null, { params: data }),
+  getEligibleDonors: () => api.get('/donations/eligible-donors'),
+  getTodaySummary: () => api.get('/donations/today/summary'),
+  getTodayDonations: () => api.get('/donations/today'),
 };
 
 // Blood Unit APIs
