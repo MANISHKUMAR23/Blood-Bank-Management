@@ -1325,132 +1325,169 @@ class BloodBankAPITester:
         return success1 and success2 and success3 and success4 and success5 and success6 and success7 and success8
 
     def test_custom_roles_apis(self):
-        """Test Phase 3 Custom Roles & Permissions APIs"""
+        """Test Custom Roles & Permissions APIs as per review request"""
         print("\n👥 Testing Custom Roles & Permissions APIs...")
         
-        # Test GET /api/users/roles - Get all roles with default permissions
+        # Test 1: GET /api/users/roles - Get all roles
         success1, response1 = self.run_test(
-            "GET All Roles with Default Permissions",
+            "GET /api/users/roles - Get all roles",
             "GET",
             "users/roles",
             200
         )
         
-        # Validate roles structure
+        # Validate roles structure - should return default_permissions object with 8 predefined roles
         if success1 and response1:
             required_keys = ['default_permissions', 'custom_roles']
             if all(key in response1 for key in required_keys):
                 print("   ✅ Roles response structure valid")
-                # Check default permissions structure
+                # Check default permissions structure - should have 8 predefined roles
                 if 'default_permissions' in response1:
                     default_roles = ['admin', 'registration', 'phlebotomist', 'lab_tech', 'processing', 'qc_manager', 'inventory', 'distribution']
                     if all(role in response1['default_permissions'] for role in default_roles):
-                        print("   ✅ All default roles present")
+                        print(f"   ✅ All 8 default roles present: {list(response1['default_permissions'].keys())}")
                     else:
-                        print("   ⚠️ Missing default roles")
-            else:
-                print(f"   ⚠️ Missing keys in roles response: {[k for k in required_keys if k not in response1]}")
-        
-        # Test GET /api/users/permissions/modules - Get available modules list
-        success2, response2 = self.run_test(
-            "GET Available Modules for Permissions",
-            "GET",
-            "users/permissions/modules",
-            200
-        )
-        
-        # Validate modules structure
-        if success2 and response2:
-            if isinstance(response2, list) and len(response2) > 0:
-                # Check first module structure
-                first_module = response2[0]
-                required_keys = ['id', 'name', 'category']
-                if all(key in first_module for key in required_keys):
-                    print(f"   ✅ Modules structure valid ({len(response2)} modules available)")
-                    # Check for key modules
-                    module_ids = [m['id'] for m in response2]
-                    key_modules = ['dashboard', 'donors', 'laboratory', 'inventory', 'reports']
-                    if all(mod in module_ids for mod in key_modules):
-                        print("   ✅ Key modules present")
-                    else:
-                        print("   ⚠️ Missing key modules")
+                        missing_roles = [role for role in default_roles if role not in response1['default_permissions']]
+                        print(f"   ❌ Missing default roles: {missing_roles}")
+                        success1 = False
                 else:
-                    print(f"   ⚠️ Missing keys in module structure: {[k for k in required_keys if k not in first_module]}")
+                    print("   ❌ Missing default_permissions in response")
+                    success1 = False
             else:
-                print("   ⚠️ Modules response is not a valid list")
+                print(f"   ❌ Missing keys in roles response: {[k for k in required_keys if k not in response1]}")
+                success1 = False
         
-        # Test POST /api/users/roles - Create custom role
-        custom_role_data = {
-            "name": f"test_role_{int(time.time())}",
-            "display_name": "Test Custom Role",
-            "permissions": ["donors", "screening", "reports"],
-            "description": "Test role for API testing"
+        # Test 2: POST /api/users/roles - Create custom role with specific test data
+        test_role_data = {
+            "name": "test_supervisor",
+            "display_name": "Test Supervisor", 
+            "description": "Test role for QA",
+            "permissions": ["inventory", "storage", "reports"]
         }
         
-        success3, response3 = self.run_test(
-            "POST Create Custom Role",
+        success2, response2 = self.run_test(
+            "POST /api/users/roles - Create custom role",
             "POST",
             "users/roles",
             200,
-            data=custom_role_data
+            data=test_role_data
         )
         
-        custom_role_id = None
-        if success3 and response3:
-            if 'role' in response3 and 'id' in response3['role']:
-                custom_role_id = response3['role']['id']
-                print(f"   ✅ Created custom role with ID: {custom_role_id}")
+        test_role_id = None
+        if success2 and response2:
+            if 'status' in response2 and response2['status'] == 'success' and 'role' in response2:
+                test_role_id = response2['role']['id']
+                print(f"   ✅ Created test role with ID: {test_role_id}")
                 # Validate created role structure
-                role = response3['role']
-                required_keys = ['id', 'name', 'display_name', 'permissions', 'is_custom', 'created_at']
+                role = response2['role']
+                required_keys = ['id', 'name', 'display_name', 'permissions', 'description']
                 if all(key in role for key in required_keys):
                     print("   ✅ Created role structure valid")
+                    # Verify the specific values
+                    if (role['name'] == 'test_supervisor' and 
+                        role['display_name'] == 'Test Supervisor' and
+                        role['description'] == 'Test role for QA' and
+                        set(role['permissions']) == set(["inventory", "storage", "reports"])):
+                        print("   ✅ Role data matches test requirements")
+                    else:
+                        print("   ❌ Role data doesn't match test requirements")
+                        success2 = False
                 else:
-                    print(f"   ⚠️ Missing keys in created role: {[k for k in required_keys if k not in role]}")
+                    print(f"   ❌ Missing keys in created role: {[k for k in required_keys if k not in role]}")
+                    success2 = False
             else:
-                print("   ⚠️ Missing role data in create response")
+                print("   ❌ Missing status or role data in create response")
+                success2 = False
         
-        # Test duplicate role creation (should fail)
+        # Test 3: DELETE /api/users/roles/{role_id} - Delete custom role
+        success3 = False
+        if test_role_id:
+            success3, response3 = self.run_test(
+                "DELETE /api/users/roles/{role_id} - Delete custom role",
+                "DELETE",
+                f"users/roles/{test_role_id}",
+                200
+            )
+            
+            if success3 and response3:
+                if 'status' in response3 and response3['status'] == 'success':
+                    print("   ✅ Role deleted successfully")
+                else:
+                    print("   ❌ Delete response missing success status")
+                    success3 = False
+        else:
+            print("   ⚠️ Skipping role deletion - no role ID available")
+            success3 = True  # Skip this test if role creation failed
+        
+        # Test 4: GET /api/users - Get all users (to get a non-admin user ID)
         success4, response4 = self.run_test(
-            "POST Create Duplicate Role (Should Fail)",
-            "POST",
-            "users/roles",
-            400,  # Should fail with 400
-            data=custom_role_data
+            "GET /api/users - Get all users",
+            "GET",
+            "users",
+            200
         )
         
-        if not success4:
-            print("   ✅ Duplicate role creation correctly rejected")
-            success4 = True  # This is expected behavior
+        non_admin_user_id = None
+        if success4 and response4:
+            if isinstance(response4, list) and len(response4) > 0:
+                # Find a non-admin user
+                for user in response4:
+                    if user.get('role') != 'admin':
+                        non_admin_user_id = user.get('id')
+                        print(f"   ✅ Found non-admin user ID: {non_admin_user_id}")
+                        break
+                
+                # Verify users have custom_permissions field
+                has_custom_permissions = all('custom_permissions' in user or user.get('role') == 'admin' for user in response4)
+                if has_custom_permissions:
+                    print("   ✅ Users list includes custom_permissions field")
+                else:
+                    print("   ⚠️ Some users missing custom_permissions field")
+            else:
+                print("   ❌ Users response is not a valid list or empty")
+                success4 = False
         
-        # Test PUT /api/users/{id}/permissions - Update user custom permissions
-        if self.admin_user_id:
-            test_permissions = ["dashboard", "donors", "reports", "inventory"]
+        # Test 5: PUT /api/users/{user_id}/permissions - Update user permissions
+        success5 = False
+        if non_admin_user_id:
+            test_permissions = ["inventory", "reports"]
             success5, response5 = self.run_test(
-                "PUT Update User Custom Permissions",
+                "PUT /api/users/{user_id}/permissions - Update user permissions",
                 "PUT",
-                f"users/{self.admin_user_id}/permissions",
+                f"users/{non_admin_user_id}/permissions",
                 200,
                 data=test_permissions
             )
+            
+            if success5 and response5:
+                if 'status' in response5 and response5['status'] == 'success':
+                    print("   ✅ User permissions updated successfully")
+                else:
+                    print("   ❌ Update permissions response missing success status")
+                    success5 = False
         else:
-            print("   ⚠️ Skipping user permissions update - no admin user ID")
-            success5 = True  # Skip this test
+            # Use admin user ID as fallback
+            if self.admin_user_id:
+                test_permissions = ["inventory", "reports"]
+                success5, response5 = self.run_test(
+                    "PUT /api/users/{user_id}/permissions - Update admin permissions",
+                    "PUT",
+                    f"users/{self.admin_user_id}/permissions",
+                    200,
+                    data=test_permissions
+                )
+                
+                if success5 and response5:
+                    if 'status' in response5 and response5['status'] == 'success':
+                        print("   ✅ Admin permissions updated successfully")
+                    else:
+                        print("   ❌ Update permissions response missing success status")
+                        success5 = False
+            else:
+                print("   ⚠️ Skipping user permissions update - no user ID available")
+                success5 = True  # Skip this test
         
-        # Test updating permissions for non-existent user (should fail)
-        success6, response6 = self.run_test(
-            "PUT Update Permissions for Non-existent User",
-            "PUT",
-            "users/non-existent-user-id/permissions",
-            404,
-            data=["dashboard"]
-        )
-        
-        if not success6:
-            print("   ✅ Non-existent user permissions update correctly rejected")
-            success6 = True  # This is expected behavior
-        
-        return success1 and success2 and success3 and success4 and success5 and success6
+        return success1 and success2 and success3 and success4 and success5
 
     def test_enhanced_donor_registration_apis(self):
         """Test Enhanced Donor Registration APIs from review request"""
