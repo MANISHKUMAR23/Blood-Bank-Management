@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { bloodUnitAPI, componentAPI } from '../lib/api';
+import { bloodUnitAPI, componentAPI, labelAPI } from '../lib/api';
 import { toast } from 'sonner';
-import { Layers, Plus, Search, RefreshCw } from 'lucide-react';
+import { Layers, Plus, Search, RefreshCw, Printer } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -12,6 +12,8 @@ import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Checkbox } from '../components/ui/checkbox';
+import LabelPrintDialog from '../components/LabelPrintDialog';
+import BulkLabelPrintDialog from '../components/BulkLabelPrintDialog';
 
 const componentTypes = [
   { value: 'prc', label: 'Packed Red Cells (PRC)', expiry: 42, temp: '2-6°C', defaultVolume: 250 },
