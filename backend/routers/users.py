@@ -122,6 +122,8 @@ async def create_custom_role(
     }
     
     await db.custom_roles.insert_one(role_doc)
+    # Remove MongoDB _id field for JSON serialization
+    role_doc.pop('_id', None)
     return {"status": "success", "role": role_doc}
 
 @router.delete("/roles/{role_id}")
