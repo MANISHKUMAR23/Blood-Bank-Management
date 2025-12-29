@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { bloodUnitAPI, componentAPI } from '../lib/api';
 import { toast } from 'sonner';
-import { Layers, Plus, Search, CheckSquare, Square, RefreshCw } from 'lucide-react';
+import { Layers, Plus, Search, RefreshCw } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -14,11 +14,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Checkbox } from '../components/ui/checkbox';
 
 const componentTypes = [
-  { value: 'prc', label: 'Packed Red Cells (PRC)', expiry: 42, temp: '2-6°C' },
-  { value: 'plasma', label: 'Plasma', expiry: 365, temp: '≤ -25°C' },
-  { value: 'ffp', label: 'Fresh Frozen Plasma (FFP)', expiry: 365, temp: '≤ -25°C' },
-  { value: 'platelets', label: 'Platelets', expiry: 5, temp: '20-24°C' },
-  { value: 'cryoprecipitate', label: 'Cryoprecipitate', expiry: 365, temp: '≤ -25°C' },
+  { value: 'prc', label: 'Packed Red Cells (PRC)', expiry: 42, temp: '2-6°C', defaultVolume: 250 },
+  { value: 'plasma', label: 'Plasma', expiry: 365, temp: '≤ -25°C', defaultVolume: 200 },
+  { value: 'ffp', label: 'Fresh Frozen Plasma (FFP)', expiry: 365, temp: '≤ -25°C', defaultVolume: 200 },
+  { value: 'platelets', label: 'Platelets', expiry: 5, temp: '20-24°C', defaultVolume: 50 },
+  { value: 'cryoprecipitate', label: 'Cryoprecipitate', expiry: 365, temp: '≤ -25°C', defaultVolume: 15 },
 ];
 
 const storageLocations = [
@@ -37,23 +37,21 @@ export default function Processing() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUnit, setSelectedUnit] = useState(null);
-  const [selectedUnits, setSelectedUnits] = useState([]);
   const [showProcessDialog, setShowProcessDialog] = useState(false);
-  const [showBatchDialog, setShowBatchDialog] = useState(false);
-  const [batchProcessing, setBatchProcessing] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
-  const [processForm, setProcessForm] = useState({
-    component_type: '',
-    volume: '',
-    storage_location: '',
-    batch_id: '',
-  });
+  // Multi-component selection state
+  const [selectedComponents, setSelectedComponents] = useState([]);
+  const [componentVolumes, setComponentVolumes] = useState({});
+  const [componentStorages, setComponentStorages] = useState({});
+  const [batchId, setBatchId] = useState('');
 
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const [unitsRes, componentsRes] = await Promise.all([
         bloodUnitAPI.getAll({ status: 'lab' }),
@@ -68,103 +66,102 @@ export default function Processing() {
     }
   };
 
-  const handleCreateComponent = async () => {
-    if (!selectedUnit) return;
-
-    try {
-      const componentType = componentTypes.find(c => c.value === processForm.component_type);
-      const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + (componentType?.expiry || 35));
-
-      const response = await componentAPI.create({
-        parent_unit_id: selectedUnit.id,
-        component_type: processForm.component_type,
-        volume: parseFloat(processForm.volume),
-        storage_location: processForm.storage_location || undefined,
-        batch_id: processForm.batch_id || undefined,
-        expiry_date: expiryDate.toISOString().split('T')[0],
-      });
-      
-      toast.success(`Component created: ${response.data.component_id}`);
-      setShowProcessDialog(false);
-      fetchData();
-      resetForm();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to create component');
-    }
-  };
-
   const resetForm = () => {
-    setProcessForm({
-      component_type: '',
-      volume: '',
-      storage_location: '',
-      batch_id: '',
-    });
+    setSelectedComponents([]);
+    setComponentVolumes({});
+    setComponentStorages({});
+    setBatchId('');
     setSelectedUnit(null);
   };
 
-  const toggleSelectUnit = (unit) => {
-    setSelectedUnits(prev => {
-      const isSelected = prev.some(u => u.id === unit.id);
-      if (isSelected) {
-        return prev.filter(u => u.id !== unit.id);
+  const toggleComponentSelection = (componentValue) => {
+    setSelectedComponents(prev => {
+      if (prev.includes(componentValue)) {
+        return prev.filter(c => c !== componentValue);
+      } else {
+        // Set default volume when selecting
+        const compType = componentTypes.find(c => c.value === componentValue);
+        if (compType && !componentVolumes[componentValue]) {
+          setComponentVolumes(v => ({ ...v, [componentValue]: compType.defaultVolume }));
+        }
+        return [...prev, componentValue];
       }
-      return [...prev, unit];
     });
   };
 
-  const toggleSelectAll = () => {
-    if (selectedUnits.length === filteredUnits.length) {
-      setSelectedUnits([]);
-    } else {
-      setSelectedUnits([...filteredUnits]);
-    }
+  const handleVolumeChange = (componentValue, volume) => {
+    setComponentVolumes(prev => ({ ...prev, [componentValue]: volume }));
   };
 
-  const handleBatchProcess = async () => {
-    if (selectedUnits.length === 0 || !processForm.component_type || !processForm.volume) {
-      toast.error('Please select units and fill required fields');
+  const handleStorageChange = (componentValue, storage) => {
+    setComponentStorages(prev => ({ ...prev, [componentValue]: storage }));
+  };
+
+  const handleCreateMultipleComponents = async () => {
+    if (!selectedUnit || selectedComponents.length === 0) {
+      toast.error('Please select at least one component type');
       return;
     }
 
-    setBatchProcessing(true);
-    const componentType = componentTypes.find(c => c.value === processForm.component_type);
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + (componentType?.expiry || 35));
-
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const unit of selectedUnits) {
-      try {
-        await componentAPI.create({
-          parent_unit_id: unit.id,
-          component_type: processForm.component_type,
-          volume: parseFloat(processForm.volume),
-          storage_location: processForm.storage_location || undefined,
-          batch_id: processForm.batch_id || undefined,
-          expiry_date: expiryDate.toISOString().split('T')[0],
-        });
-        successCount++;
-      } catch (error) {
-        failCount++;
+    // Validate all selected components have volumes
+    for (const comp of selectedComponents) {
+      if (!componentVolumes[comp] || componentVolumes[comp] <= 0) {
+        toast.error(`Please enter volume for ${componentTypes.find(c => c.value === comp)?.label}`);
+        return;
       }
     }
 
-    setBatchProcessing(false);
-    
+    setProcessing(true);
+    let successCount = 0;
+    let failCount = 0;
+    const createdComponents = [];
+
+    for (const compValue of selectedComponents) {
+      try {
+        const compType = componentTypes.find(c => c.value === compValue);
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + (compType?.expiry || 35));
+
+        const response = await componentAPI.create({
+          parent_unit_id: selectedUnit.id,
+          component_type: compValue,
+          volume: parseFloat(componentVolumes[compValue]),
+          storage_location: componentStorages[compValue] || undefined,
+          batch_id: batchId || undefined,
+          expiry_date: expiryDate.toISOString().split('T')[0],
+        });
+        
+        successCount++;
+        createdComponents.push(response.data.component_id);
+      } catch (error) {
+        failCount++;
+        console.error(`Failed to create ${compValue}:`, error);
+      }
+    }
+
+    setProcessing(false);
+
     if (successCount > 0) {
-      toast.success(`Created ${successCount} components successfully`);
+      toast.success(
+        <div>
+          <p className="font-medium">Created {successCount} component(s)</p>
+          <p className="text-xs mt-1">{createdComponents.join(', ')}</p>
+        </div>
+      );
     }
     if (failCount > 0) {
-      toast.error(`Failed to create ${failCount} components`);
+      toast.error(`Failed to create ${failCount} component(s)`);
     }
-    
-    setShowBatchDialog(false);
-    setSelectedUnits([]);
+
+    setShowProcessDialog(false);
     fetchData();
     resetForm();
+  };
+
+  const getTotalVolume = () => {
+    return selectedComponents.reduce((sum, comp) => {
+      return sum + (parseFloat(componentVolumes[comp]) || 0);
+    }, 0);
   };
 
   const filteredUnits = units.filter(u => 
