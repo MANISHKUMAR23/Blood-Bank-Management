@@ -112,9 +112,12 @@ issuance_router = APIRouter(prefix="/issuances", tags=["Issuances"])
 @issuance_router.post("")
 async def create_issuance(
     request_id: str = Query(..., description="Request ID"),
-    component_ids: List[str] = Query(..., description="List of component IDs"),
+    component_ids: List[str] = Query(default=[], description="List of component IDs"),
     current_user: dict = Depends(get_current_user)
 ):
+    if not component_ids:
+        raise HTTPException(status_code=400, detail="At least one component ID is required")
+    
     request = await db.blood_requests.find_one(
         {"$or": [{"id": request_id}, {"request_id": request_id}]},
         {"_id": 0}
