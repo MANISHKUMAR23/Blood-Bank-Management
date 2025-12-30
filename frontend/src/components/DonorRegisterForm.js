@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { publicDonorAPI } from '../lib/api';
 import { toast } from 'sonner';
-import { User, Phone, MapPin, CreditCard, CheckCircle, Loader2 } from 'lucide-react';
+import { User, Phone, MapPin, CreditCard, CheckCircle, Loader2, Heart, AlertTriangle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { Textarea } from './ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 
 const genders = ['Male', 'Female', 'Other'];
 const identityTypes = ['Aadhar', 'Passport', 'Driving License', 'Voter ID', 'PAN Card'];
@@ -28,8 +29,43 @@ export default function DonorRegisterForm({ onSuccess }) {
     consent_given: false,
   });
 
+  // Health questionnaire - same as staff portal
+  const [questionnaire, setQuestionnaire] = useState({
+    feeling_well_today: true,
+    had_cold_flu_last_week: false,
+    taking_medications: false,
+    medication_details: '',
+    had_surgery_last_year: false,
+    surgery_details: '',
+    has_chronic_illness: false,
+    chronic_illness_details: '',
+    has_heart_condition: false,
+    has_diabetes: false,
+    has_hypertension: false,
+    has_bleeding_disorder: false,
+    had_hepatitis: false,
+    had_jaundice: false,
+    had_malaria_last_year: false,
+    had_typhoid_last_year: false,
+    had_tuberculosis: false,
+    hiv_risk_behavior: false,
+    had_tattoo_last_year: false,
+    had_piercing_last_year: false,
+    received_blood_last_year: false,
+    dental_procedure_last_month: false,
+    alcohol_consumption: 'none',
+    smoking_status: 'non_smoker',
+    is_pregnant: null,
+    is_breastfeeding: null,
+    had_miscarriage_last_6_months: null,
+  });
+
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleQuestionnaireChange = (field, value) => {
+    setQuestionnaire(prev => ({ ...prev, [field]: value }));
   };
 
   const validateStep = (stepNum) => {
@@ -39,10 +75,23 @@ export default function DonorRegisterForm({ onSuccess }) {
       case 2:
         return formData.full_name && formData.date_of_birth && formData.gender;
       case 3:
-        return formData.phone && formData.address && formData.consent_given;
+        return formData.phone && formData.address;
+      case 4:
+        return formData.consent_given;
       default:
         return true;
     }
+  };
+
+  // Check for disqualifying conditions
+  const hasDisqualifyingConditions = () => {
+    return (
+      questionnaire.had_hepatitis ||
+      questionnaire.had_tuberculosis ||
+      questionnaire.hiv_risk_behavior ||
+      questionnaire.has_bleeding_disorder ||
+      !questionnaire.feeling_well_today
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -58,6 +107,7 @@ export default function DonorRegisterForm({ onSuccess }) {
       const data = {
         ...formData,
         weight: formData.weight ? parseFloat(formData.weight) : undefined,
+        health_questionnaire: questionnaire,
       };
       
       const response = await publicDonorAPI.register(data);
@@ -74,7 +124,7 @@ export default function DonorRegisterForm({ onSuccess }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Progress Steps */}
       <div className="flex items-center justify-center gap-2 mb-6">
-        {[1, 2, 3].map((s) => (
+        {[1, 2, 3, 4].map((s) => (
           <React.Fragment key={s}>
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
@@ -87,7 +137,7 @@ export default function DonorRegisterForm({ onSuccess }) {
             >
               {step > s ? <CheckCircle className="w-4 h-4" /> : s}
             </div>
-            {s < 3 && (
+            {s < 4 && (
               <div className={`w-8 h-0.5 ${step > s ? 'bg-teal-600' : 'bg-slate-200'}`} />
             )}
           </React.Fragment>
@@ -192,7 +242,7 @@ export default function DonorRegisterForm({ onSuccess }) {
         </div>
       )}
 
-      {/* Step 3: Contact & Consent */}
+      {/* Step 3: Contact Information */}
       {step === 3 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
@@ -238,7 +288,271 @@ export default function DonorRegisterForm({ onSuccess }) {
               data-testid="input-address"
             />
           </div>
+        </div>
+      )}
 
+      {/* Step 4: Health Questionnaire & Consent */}
+      {step === 4 && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <Heart className="w-4 h-4 text-teal-600" />
+            Health Questionnaire
+          </div>
+          <p className="text-xs text-slate-500 -mt-4">Please answer honestly - this helps ensure safe donation</p>
+
+          {/* Warning for disqualifying conditions */}
+          {hasDisqualifyingConditions() && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">Possible Deferral</p>
+                <p className="text-xs text-amber-700">Some of your responses may affect your eligibility. Staff will review during screening.</p>
+              </div>
+            </div>
+          )}
+
+          {/* General Health */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-slate-700 text-sm">General Health</h4>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                <span className="text-sm">Are you feeling well today?</span>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="feeling_well"
+                      checked={questionnaire.feeling_well_today === true}
+                      onChange={() => handleQuestionnaireChange('feeling_well_today', true)}
+                      className="accent-teal-600"
+                    />
+                    <span className="text-sm">Yes</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="feeling_well"
+                      checked={questionnaire.feeling_well_today === false}
+                      onChange={() => handleQuestionnaireChange('feeling_well_today', false)}
+                      className="accent-teal-600"
+                    />
+                    <span className="text-sm">No</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                <span className="text-sm">Had cold/flu in the last week?</span>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="cold_flu"
+                      checked={questionnaire.had_cold_flu_last_week === true}
+                      onChange={() => handleQuestionnaireChange('had_cold_flu_last_week', true)}
+                      className="accent-teal-600"
+                    />
+                    <span className="text-sm">Yes</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="cold_flu"
+                      checked={questionnaire.had_cold_flu_last_week === false}
+                      onChange={() => handleQuestionnaireChange('had_cold_flu_last_week', false)}
+                      className="accent-teal-600"
+                    />
+                    <span className="text-sm">No</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="p-2 bg-slate-50 rounded-lg space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Currently taking any medications?</span>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="medications"
+                        checked={questionnaire.taking_medications === true}
+                        onChange={() => handleQuestionnaireChange('taking_medications', true)}
+                        className="accent-teal-600"
+                      />
+                      <span className="text-sm">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="medications"
+                        checked={questionnaire.taking_medications === false}
+                        onChange={() => handleQuestionnaireChange('taking_medications', false)}
+                        className="accent-teal-600"
+                      />
+                      <span className="text-sm">No</span>
+                    </label>
+                  </div>
+                </div>
+                {questionnaire.taking_medications && (
+                  <Input
+                    placeholder="Please specify medications..."
+                    value={questionnaire.medication_details}
+                    onChange={(e) => handleQuestionnaireChange('medication_details', e.target.value)}
+                    className="mt-2"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Medical History */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-slate-700 text-sm">Medical History</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {[
+                { key: 'has_heart_condition', label: 'Heart condition' },
+                { key: 'has_diabetes', label: 'Diabetes' },
+                { key: 'has_hypertension', label: 'High blood pressure' },
+                { key: 'has_bleeding_disorder', label: 'Bleeding disorder' },
+                { key: 'had_hepatitis', label: 'Hepatitis (ever)' },
+                { key: 'had_jaundice', label: 'Jaundice (ever)' },
+                { key: 'had_tuberculosis', label: 'Tuberculosis (ever)' },
+                { key: 'had_malaria_last_year', label: 'Malaria (last year)' },
+              ].map(item => (
+                <div key={item.key} className="flex items-center space-x-2 p-2 rounded hover:bg-slate-50">
+                  <Checkbox
+                    id={item.key}
+                    checked={questionnaire[item.key]}
+                    onCheckedChange={(checked) => handleQuestionnaireChange(item.key, checked)}
+                  />
+                  <label htmlFor={item.key} className="text-sm cursor-pointer">{item.label}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Activities */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-slate-700 text-sm">Recent Activities (Last Year)</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {[
+                { key: 'had_tattoo_last_year', label: 'Got a tattoo' },
+                { key: 'had_piercing_last_year', label: 'Got a piercing' },
+                { key: 'received_blood_last_year', label: 'Received blood transfusion' },
+                { key: 'dental_procedure_last_month', label: 'Dental procedure (last month)' },
+              ].map(item => (
+                <div key={item.key} className="flex items-center space-x-2 p-2 rounded hover:bg-slate-50">
+                  <Checkbox
+                    id={item.key}
+                    checked={questionnaire[item.key]}
+                    onCheckedChange={(checked) => handleQuestionnaireChange(item.key, checked)}
+                  />
+                  <label htmlFor={item.key} className="text-sm cursor-pointer">{item.label}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Lifestyle */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-slate-700 text-sm">Lifestyle</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm">Alcohol Consumption</Label>
+                <Select 
+                  value={questionnaire.alcohol_consumption}
+                  onValueChange={(v) => handleQuestionnaireChange('alcohol_consumption', v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="occasional">Occasional</SelectItem>
+                    <SelectItem value="regular">Regular</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">Smoking Status</Label>
+                <Select 
+                  value={questionnaire.smoking_status}
+                  onValueChange={(v) => handleQuestionnaireChange('smoking_status', v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="non_smoker">Non-smoker</SelectItem>
+                    <SelectItem value="former_smoker">Former smoker</SelectItem>
+                    <SelectItem value="occasional">Occasional</SelectItem>
+                    <SelectItem value="regular">Regular</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Female-specific questions (conditionally shown) */}
+          {formData.gender === 'Female' && (
+            <div className="space-y-3">
+              <h4 className="font-medium text-slate-700 text-sm">Female-Specific Questions</h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                  <span className="text-sm">Are you currently pregnant?</span>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="pregnant"
+                        checked={questionnaire.is_pregnant === true}
+                        onChange={() => handleQuestionnaireChange('is_pregnant', true)}
+                        className="accent-teal-600"
+                      />
+                      <span className="text-sm">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="pregnant"
+                        checked={questionnaire.is_pregnant === false}
+                        onChange={() => handleQuestionnaireChange('is_pregnant', false)}
+                        className="accent-teal-600"
+                      />
+                      <span className="text-sm">No</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                  <span className="text-sm">Are you currently breastfeeding?</span>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="breastfeeding"
+                        checked={questionnaire.is_breastfeeding === true}
+                        onChange={() => handleQuestionnaireChange('is_breastfeeding', true)}
+                        className="accent-teal-600"
+                      />
+                      <span className="text-sm">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="breastfeeding"
+                        checked={questionnaire.is_breastfeeding === false}
+                        onChange={() => handleQuestionnaireChange('is_breastfeeding', false)}
+                        className="accent-teal-600"
+                      />
+                      <span className="text-sm">No</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Consent */}
           <div className="pt-4 border-t">
             <div className="flex items-start gap-3">
               <Checkbox
@@ -275,7 +589,7 @@ export default function DonorRegisterForm({ onSuccess }) {
           Previous
         </Button>
         
-        {step < 3 ? (
+        {step < 4 ? (
           <Button
             type="button"
             onClick={() => setStep(step + 1)}
@@ -287,7 +601,7 @@ export default function DonorRegisterForm({ onSuccess }) {
         ) : (
           <Button
             type="submit"
-            disabled={loading || !validateStep(3)}
+            disabled={loading || !validateStep(4)}
             className="bg-teal-600 hover:bg-teal-700"
             data-testid="submit-registration-btn"
           >
