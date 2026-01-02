@@ -4,6 +4,36 @@ from datetime import datetime, timezone
 import uuid
 from .enums import DonorStatus, BloodGroup, DonorRequestStatus, DonorRequestType
 
+# Deactivation reasons enum
+DEACTIVATION_REASONS = [
+    "medical",
+    "failed_screening", 
+    "fraud",
+    "request",
+    "deceased",
+    "other"
+]
+
+# Reward tiers
+REWARD_TIERS = {
+    "bronze": {"min": 1, "max": 5},
+    "silver": {"min": 6, "max": 15},
+    "gold": {"min": 16, "max": 30},
+    "platinum": {"min": 31, "max": float('inf')}
+}
+
+# Points configuration
+POINTS_CONFIG = {
+    "whole_blood": 10,
+    "apheresis_platelets": 20,
+    "apheresis_plasma": 20,
+    "emergency_bonus": 15,
+    "milestone_5": 50,
+    "milestone_10": 100,
+    "milestone_25": 250,
+    "milestone_50": 500
+}
+
 class HealthQuestionnaire(BaseModel):
     """Extended health questionnaire for donor registration"""
     # General Health
