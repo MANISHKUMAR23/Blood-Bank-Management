@@ -256,7 +256,11 @@ export default function StorageManagement() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="capitalize">{loc.storage_type?.replace('_', ' ')}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
+                          {getStorageTypeInfo(loc.storage_type)?.type_name || loc.storage_type?.replace('_', ' ')}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Thermometer className="w-4 h-4 text-blue-500" />
