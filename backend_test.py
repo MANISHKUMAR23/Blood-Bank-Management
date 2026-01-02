@@ -3927,6 +3927,44 @@ class BloodBankAPITester:
         
         return all_passed
 
+    def run_multi_tenancy_tests(self):
+        """Run Multi-Tenancy System Phase 1 Backend API tests as per review request"""
+        print("🚀 Starting Multi-Tenancy System Phase 1 Backend API Testing...")
+        print(f"🌐 Base URL: {self.base_url}")
+        
+        # Multi-Tenancy System Phase 1 API tests
+        tests = [
+            ("Multi-Tenancy System Phase 1 Backend APIs", self.test_multi_tenancy_apis),
+        ]
+        
+        # Run tests
+        all_passed = True
+        for test_name, test_func in tests:
+            print(f"\n{'='*60}")
+            print(f"🧪 Running: {test_name}")
+            print('='*60)
+            try:
+                success = test_func()
+                if success:
+                    print(f"✅ {test_name} - PASSED")
+                else:
+                    print(f"❌ {test_name} - FAILED")
+                    all_passed = False
+            except Exception as e:
+                print(f"💥 {test_name} - ERROR: {str(e)}")
+                all_passed = False
+        
+        # Final summary
+        print(f"\n{'='*60}")
+        print("📊 MULTI-TENANCY SYSTEM PHASE 1 TEST SUMMARY")
+        print('='*60)
+        print(f"Total tests run: {self.tests_run}")
+        print(f"Tests passed: {self.tests_passed}")
+        print(f"Tests failed: {self.tests_run - self.tests_passed}")
+        print(f"Success rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
+        
+        return all_passed
+
 def main():
     print("🏢 Multi-Tenancy System Phase 1 Backend API Testing")
     print("=" * 70)
