@@ -123,6 +123,9 @@ function AppRoutes() {
         {/* Reports */}
         <Route path="reports" element={<Reports />} />
         
+        {/* Leaderboard */}
+        <Route path="leaderboard" element={<Leaderboard />} />
+        
         {/* Alerts */}
         <Route path="alerts" element={<Alerts />} />
         
