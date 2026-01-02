@@ -1520,6 +1520,130 @@ export default function Configuration() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Storage Type Dialog */}
+      <Dialog open={showStorageTypeDialog} onOpenChange={setShowStorageTypeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedStorageType?._isEditing ? 'Edit Storage Type' : 'Add Custom Storage Type'}</DialogTitle>
+            <DialogDescription>Define a new storage type for blood products</DialogDescription>
+          </DialogHeader>
+          
+          {selectedStorageType && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Type Code</Label>
+                  <Input 
+                    value={selectedStorageType.type_code || ''} 
+                    onChange={(e) => setSelectedStorageType({...selectedStorageType, type_code: e.target.value.toLowerCase().replace(/\s/g, '_')})}
+                    placeholder="e.g., cryo_storage"
+                    disabled={selectedStorageType._isEditing}
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Unique identifier (lowercase, no spaces)</p>
+                </div>
+                <div>
+                  <Label>Display Name</Label>
+                  <Input 
+                    value={selectedStorageType.type_name || ''} 
+                    onChange={(e) => setSelectedStorageType({...selectedStorageType, type_name: e.target.value})}
+                    placeholder="e.g., Cryo Storage"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Temperature Range</Label>
+                  <Input 
+                    value={selectedStorageType.default_temp_range || ''} 
+                    onChange={(e) => setSelectedStorageType({...selectedStorageType, default_temp_range: e.target.value})}
+                    placeholder="e.g., -196°C or 2-8°C"
+                  />
+                </div>
+                <div>
+                  <Label>Icon (Emoji)</Label>
+                  <Input 
+                    value={selectedStorageType.icon || ''} 
+                    onChange={(e) => setSelectedStorageType({...selectedStorageType, icon: e.target.value})}
+                    placeholder="📦"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label>Description</Label>
+                <Textarea 
+                  value={selectedStorageType.description || ''} 
+                  onChange={(e) => setSelectedStorageType({...selectedStorageType, description: e.target.value})}
+                  placeholder="Optional description of this storage type"
+                  rows={2}
+                />
+              </div>
+              
+              <div>
+                <Label>Suitable For (comma separated)</Label>
+                <Input 
+                  value={(selectedStorageType.suitable_for || []).join(', ')} 
+                  onChange={(e) => setSelectedStorageType({
+                    ...selectedStorageType, 
+                    suitable_for: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                  })}
+                  placeholder="e.g., stem_cells, cord_blood, bone_marrow"
+                />
+                <p className="text-xs text-slate-500 mt-1">What blood products can be stored here</p>
+              </div>
+              
+              <div>
+                <Label>Color Theme</Label>
+                <Select value={selectedStorageType.color} onValueChange={(v) => setSelectedStorageType({...selectedStorageType, color: v})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select color" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="slate">Slate (Gray)</SelectItem>
+                    <SelectItem value="blue">Blue</SelectItem>
+                    <SelectItem value="indigo">Indigo</SelectItem>
+                    <SelectItem value="purple">Purple</SelectItem>
+                    <SelectItem value="pink">Pink</SelectItem>
+                    <SelectItem value="red">Red</SelectItem>
+                    <SelectItem value="orange">Orange</SelectItem>
+                    <SelectItem value="amber">Amber</SelectItem>
+                    <SelectItem value="yellow">Yellow</SelectItem>
+                    <SelectItem value="lime">Lime</SelectItem>
+                    <SelectItem value="green">Green</SelectItem>
+                    <SelectItem value="emerald">Emerald</SelectItem>
+                    <SelectItem value="teal">Teal</SelectItem>
+                    <SelectItem value="cyan">Cyan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowStorageTypeDialog(false)}>Cancel</Button>
+            <Button onClick={async () => {
+              if (!selectedStorageType?.type_code || !selectedStorageType?.type_name || !selectedStorageType?.default_temp_range) {
+                toast.error('Type code, name, and temperature range are required');
+                return;
+              }
+              try {
+                if (selectedStorageType._isEditing) {
+                  await configAPI.updateStorageType(selectedStorageType.type_code, selectedStorageType);
+                } else {
+                  await configAPI.createStorageType(selectedStorageType);
+                }
+                toast.success('Storage type saved');
+                setShowStorageTypeDialog(false);
+                fetchData();
+              } catch (error) {
+                toast.error(error.response?.data?.detail || 'Failed to save storage type');
+              }
+            }}>Save Storage Type</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
