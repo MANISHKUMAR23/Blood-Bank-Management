@@ -129,7 +129,7 @@ async def get_accessible_org_ids(current_user: dict) -> List[str]:
 
 # ============== Public Endpoints ==============
 
-@router.get("/public", response_model=List[OrganizationResponse])
+@router.get("/public")
 async def get_public_organizations():
     """
     Get list of active organizations for login dropdown.
@@ -137,10 +137,23 @@ async def get_public_organizations():
     """
     orgs = await db.organizations.find(
         {"is_active": True},
-        {"_id": 0, "id": 1, "org_name": 1, "org_type": 1, "city": 1, "state": 1, "parent_org_id": 1, "is_parent": 1}
+        {"_id": 0}
     ).to_list(500)
     
-    return orgs
+    # Return simplified list for login dropdown
+    result = []
+    for org in orgs:
+        result.append({
+            "id": org.get("id"),
+            "org_name": org.get("org_name"),
+            "org_type": org.get("org_type"),
+            "city": org.get("city"),
+            "state": org.get("state"),
+            "parent_org_id": org.get("parent_org_id"),
+            "is_parent": org.get("is_parent", False)
+        })
+    
+    return result
 
 
 # ============== Organization CRUD ==============
