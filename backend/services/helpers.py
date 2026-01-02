@@ -31,10 +31,12 @@ def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
 # ==================== JWT FUNCTIONS ====================
-def create_token(user_id: str, role: str) -> str:
+def create_token(user_id: str, role: str, org_id: str = None, user_type: str = "staff") -> str:
     payload = {
         "user_id": user_id,
         "role": role,
+        "org_id": org_id,
+        "user_type": user_type,
         "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -52,6 +54,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     user = await db.users.find_one({"id": payload["user_id"]}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    
+    # Add org_id and user_type from token (may differ from DB for system admins)
+    user["org_id"] = payload.get("org_id") or user.get("org_id")
+    user["user_type"] = payload.get("user_type") or user.get("user_type", "staff")
+    
     return user
 
 # ==================== BARCODE/QR FUNCTIONS ====================
