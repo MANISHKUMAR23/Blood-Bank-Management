@@ -727,18 +727,23 @@ async def get_storage_type(type_code: str, current_user: dict = Depends(get_curr
 
 @router.post("/storage-types")
 async def create_storage_type(
-    type_code: str,
-    type_name: str,
-    default_temp_range: str,
-    description: Optional[str] = None,
-    icon: str = "📦",
-    color: str = "slate",
-    suitable_for: Optional[List[str]] = None,
+    data: dict,
     current_user: dict = Depends(get_current_user)
 ):
     """Create a new custom storage type"""
     if current_user["role"] not in ["admin", "config_manager", "inventory"]:
         raise HTTPException(status_code=403, detail="Permission denied")
+    
+    type_code = data.get("type_code", "")
+    type_name = data.get("type_name", "")
+    default_temp_range = data.get("default_temp_range", "")
+    description = data.get("description")
+    icon = data.get("icon", "📦")
+    color = data.get("color", "slate")
+    suitable_for = data.get("suitable_for", [])
+    
+    if not type_code or not type_name or not default_temp_range:
+        raise HTTPException(status_code=400, detail="type_code, type_name, and default_temp_range are required")
     
     # Normalize type_code
     type_code = type_code.lower().replace(" ", "_").replace("-", "_")
