@@ -5,7 +5,7 @@ import {
   Users, Droplet, Clipboard, FlaskConical, Layers, ShieldCheck,
   Package, ClipboardList, Truck, RotateCcw, Trash2, BarChart3,
   Settings, LogOut, Menu, X, Sun, Moon, Home, Microscope, UserPlus, Bell,
-  Warehouse, ClipboardCheck, Navigation, Trophy
+  Warehouse, ClipboardCheck, Navigation, Trophy, Cog
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -28,10 +28,11 @@ const roleLabels = {
   qc_manager: 'QC Manager',
   inventory: 'Inventory Manager',
   distribution: 'Distribution Staff',
+  config_manager: 'Config Manager',
 };
 
 const navItems = [
-  { path: '/dashboard', icon: Home, label: 'Dashboard', roles: ['admin', 'registration', 'phlebotomist', 'lab_tech', 'processing', 'qc_manager', 'inventory', 'distribution'] },
+  { path: '/dashboard', icon: Home, label: 'Dashboard', roles: ['admin', 'registration', 'phlebotomist', 'lab_tech', 'processing', 'qc_manager', 'inventory', 'distribution', 'config_manager'] },
   { path: '/donor-requests', icon: UserPlus, label: 'Donor Requests', roles: ['admin', 'registration'] },
   { path: '/donors', icon: Users, label: 'Donor Management', roles: ['admin', 'registration'] },
   { path: '/screening', icon: Clipboard, label: 'Screening', roles: ['admin', 'registration', 'phlebotomist'] },
@@ -45,12 +46,13 @@ const navItems = [
   { path: '/storage', icon: Warehouse, label: 'Storage', roles: ['admin', 'inventory'] },
   { path: '/requests', icon: ClipboardList, label: 'Requests', roles: ['admin', 'inventory', 'distribution'] },
   { path: '/distribution', icon: Truck, label: 'Distribution', roles: ['admin', 'distribution'] },
-  { path: '/logistics', icon: Navigation, label: 'Logistics', roles: ['admin', 'distribution'] },
+  { path: '/logistics-enhanced', icon: Navigation, label: 'Logistics', roles: ['admin', 'distribution'] },
   { path: '/returns', icon: RotateCcw, label: 'Returns', roles: ['admin', 'inventory', 'qc_manager'] },
   { path: '/discards', icon: Trash2, label: 'Discards', roles: ['admin', 'inventory', 'qc_manager'] },
   { path: '/reports', icon: BarChart3, label: 'Reports', roles: ['admin', 'qc_manager', 'inventory'] },
   { path: '/leaderboard', icon: Trophy, label: 'Leaderboard', roles: ['admin', 'registration', 'phlebotomist', 'lab_tech', 'processing', 'qc_manager', 'inventory', 'distribution'] },
   { path: '/alerts', icon: Bell, label: 'Alerts', roles: ['admin', 'qc_manager', 'inventory', 'registration'] },
+  { path: '/configuration', icon: Cog, label: 'Configuration', roles: ['admin', 'config_manager'] },
   { path: '/users', icon: Settings, label: 'User Management', roles: ['admin'] },
 ];
 
