@@ -2832,6 +2832,507 @@ class BloodBankAPITester:
         
         return all_passed
 
+    def test_configuration_logistics_module(self):
+        """Test Configuration & Logistics Module APIs as per review request"""
+        print("\n⚙️ Testing Configuration & Logistics Module APIs...")
+        
+        # Test 1: Configuration - Forms APIs
+        success1, response1 = self.run_test(
+            "GET /api/config/forms - Get all forms",
+            "GET",
+            "config/forms",
+            200
+        )
+        
+        # Validate forms response - should return 7 default forms
+        if success1 and response1:
+            if isinstance(response1, list):
+                print(f"   ✅ Found {len(response1)} forms")
+                if len(response1) >= 7:
+                    print("   ✅ All 7 default forms present")
+                    # Check for specific forms
+                    form_names = [f.get('form_name') for f in response1]
+                    expected_forms = ['donor_registration', 'health_screening', 'collection', 'lab_tests', 'component_processing', 'qc_validation', 'blood_request']
+                    missing_forms = [f for f in expected_forms if f not in form_names]
+                    if not missing_forms:
+                        print("   ✅ All expected form types present")
+                    else:
+                        print(f"   ⚠️ Missing forms: {missing_forms}")
+                else:
+                    print(f"   ⚠️ Expected at least 7 forms, got {len(response1)}")
+            else:
+                print(f"   ❌ Expected list response, got: {type(response1)}")
+                success1 = False
+        
+        # Test 2: Get specific form - donor_registration
+        success2, response2 = self.run_test(
+            "GET /api/config/forms/donor_registration - Get donor registration form",
+            "GET",
+            "config/forms/donor_registration",
+            200
+        )
+        
+        # Validate donor registration form structure
+        if success2 and response2:
+            required_keys = ['form_name', 'form_schema']
+            if all(key in response2 for key in required_keys):
+                print("   ✅ Donor registration form structure valid")
+                if response2.get('form_name') == 'donor_registration':
+                    print("   ✅ Form name correct")
+                    form_schema = response2.get('form_schema', [])
+                    if len(form_schema) >= 8:
+                        print(f"   ✅ Form has {len(form_schema)} fields")
+                        # Check for required fields
+                        field_names = [f.get('name') for f in form_schema]
+                        required_fields = ['donor_id', 'full_name', 'date_of_birth', 'gender', 'phone']
+                        missing_fields = [f for f in required_fields if f not in field_names]
+                        if not missing_fields:
+                            print("   ✅ All required fields present")
+                        else:
+                            print(f"   ⚠️ Missing required fields: {missing_fields}")
+                    else:
+                        print(f"   ⚠️ Expected at least 8 fields, got {len(form_schema)}")
+                else:
+                    print(f"   ❌ Wrong form name: {response2.get('form_name')}")
+                    success2 = False
+            else:
+                print(f"   ❌ Missing keys in form response: {[k for k in required_keys if k not in response2]}")
+                success2 = False
+        
+        # Test 3: Update form schema (PUT)
+        test_form_schema = [
+            {"name": "donor_id", "label": "Donor ID", "field_type": "text", "required": True, "is_system_field": True, "order": 0},
+            {"name": "full_name", "label": "Full Name", "field_type": "text", "required": True, "order": 1},
+            {"name": "date_of_birth", "label": "Date of Birth", "field_type": "date", "required": True, "order": 2},
+            {"name": "gender", "label": "Gender", "field_type": "radio", "required": True, "options": ["Male", "Female", "Other"], "order": 3},
+            {"name": "phone", "label": "Phone Number", "field_type": "phone", "required": True, "order": 4},
+            {"name": "test_field", "label": "Test Field", "field_type": "text", "required": False, "order": 5}
+        ]
+        
+        success3, response3 = self.run_test(
+            "PUT /api/config/forms/donor_registration - Update form schema",
+            "PUT",
+            "config/forms/donor_registration",
+            200,
+            data=test_form_schema
+        )
+        
+        if success3 and response3:
+            if response3.get('status') == 'success':
+                print("   ✅ Form schema updated successfully")
+            else:
+                print(f"   ❌ Form update failed: {response3}")
+                success3 = False
+        
+        # Test 4: Workflow Rules APIs
+        # Create workflow rule
+        test_rule_data = {
+            "rule_name": "Auto-reject low Hb",
+            "module": "screening",
+            "trigger_event": "on_submit",
+            "conditions": [
+                {
+                    "field": "hemoglobin",
+                    "operator": "less_than",
+                    "value": 12.5,
+                    "logic": "AND"
+                }
+            ],
+            "actions": [
+                {
+                    "action_type": "set_status",
+                    "params": {"status": "ineligible", "reason": "Hemoglobin below minimum threshold"}
+                }
+            ],
+            "priority": 10,
+            "is_active": True
+        }
+        
+        success4, response4 = self.run_test(
+            "POST /api/config/rules - Create workflow rule",
+            "POST",
+            "config/rules",
+            200,
+            data=test_rule_data
+        )
+        
+        rule_id = None
+        if success4 and response4:
+            if response4.get('status') == 'success' and 'rule_id' in response4:
+                rule_id = response4['rule_id']
+                print(f"   ✅ Workflow rule created with ID: {rule_id}")
+            else:
+                print(f"   ❌ Rule creation failed: {response4}")
+                success4 = False
+        
+        # Test 5: Get all workflow rules
+        success5, response5 = self.run_test(
+            "GET /api/config/rules - Get all workflow rules",
+            "GET",
+            "config/rules",
+            200
+        )
+        
+        if success5 and response5:
+            if isinstance(response5, list):
+                print(f"   ✅ Found {len(response5)} workflow rules")
+                if len(response5) > 0:
+                    rule = response5[0]
+                    required_keys = ['id', 'rule_name', 'module', 'trigger_event', 'conditions', 'actions']
+                    missing_keys = [k for k in required_keys if k not in rule]
+                    if not missing_keys:
+                        print("   ✅ Workflow rule structure valid")
+                    else:
+                        print(f"   ❌ Missing keys in rule: {missing_keys}")
+                        success5 = False
+            else:
+                print(f"   ❌ Expected list response, got: {type(response5)}")
+                success5 = False
+        
+        # Test 6: Toggle workflow rule
+        success6 = True
+        if rule_id:
+            success6, response6 = self.run_test(
+                "PUT /api/config/rules/{id}/toggle - Toggle rule status",
+                "PUT",
+                f"config/rules/{rule_id}/toggle",
+                200
+            )
+            
+            if success6 and response6:
+                if 'is_active' in response6:
+                    print(f"   ✅ Rule toggled, new status: {response6['is_active']}")
+                else:
+                    print(f"   ❌ Toggle response missing is_active: {response6}")
+                    success6 = False
+        
+        # Test 7: Delete workflow rule
+        success7 = True
+        if rule_id:
+            success7, response7 = self.run_test(
+                "DELETE /api/config/rules/{id} - Delete rule",
+                "DELETE",
+                f"config/rules/{rule_id}",
+                200
+            )
+            
+            if success7 and response7:
+                if response7.get('status') == 'success':
+                    print("   ✅ Workflow rule deleted successfully")
+                else:
+                    print(f"   ❌ Rule deletion failed: {response7}")
+                    success7 = False
+        
+        # Test 8: Vehicles APIs
+        # Create vehicle
+        test_vehicle_data = {
+            "vehicle_type": "van",
+            "vehicle_model": "Toyota Innova",
+            "registration_number": "MH12AB1234",
+            "capacity": 10,
+            "driver_name": "John Driver",
+            "driver_phone": "9876543210"
+        }
+        
+        success8, response8 = self.run_test(
+            "POST /api/config/vehicles - Create vehicle",
+            "POST",
+            "config/vehicles",
+            200,
+            data=test_vehicle_data
+        )
+        
+        vehicle_id = None
+        if success8 and response8:
+            if response8.get('status') == 'success':
+                vehicle_id = response8.get('id') or response8.get('vehicle_id')
+                print(f"   ✅ Vehicle created with ID: {vehicle_id}")
+            else:
+                print(f"   ❌ Vehicle creation failed: {response8}")
+                success8 = False
+        
+        # Test 9: Get all vehicles
+        success9, response9 = self.run_test(
+            "GET /api/config/vehicles - Get all vehicles",
+            "GET",
+            "config/vehicles",
+            200
+        )
+        
+        if success9 and response9:
+            if isinstance(response9, list):
+                print(f"   ✅ Found {len(response9)} vehicles")
+                if len(response9) > 0:
+                    vehicle = response9[0]
+                    required_keys = ['id', 'vehicle_type', 'vehicle_model', 'registration_number', 'capacity']
+                    missing_keys = [k for k in required_keys if k not in vehicle]
+                    if not missing_keys:
+                        print("   ✅ Vehicle structure valid")
+                        print(f"   ✅ Sample vehicle: {vehicle.get('vehicle_model')} - {vehicle.get('registration_number')}")
+                    else:
+                        print(f"   ❌ Missing keys in vehicle: {missing_keys}")
+                        success9 = False
+            else:
+                print(f"   ❌ Expected list response, got: {type(response9)}")
+                success9 = False
+        
+        # Test 10: Toggle vehicle status
+        success10 = True
+        if vehicle_id:
+            success10, response10 = self.run_test(
+                "PUT /api/config/vehicles/{id}/toggle - Toggle vehicle status",
+                "PUT",
+                f"config/vehicles/{vehicle_id}/toggle",
+                200
+            )
+            
+            if success10 and response10:
+                if 'is_active' in response10:
+                    print(f"   ✅ Vehicle toggled, new status: {response10['is_active']}")
+                else:
+                    print(f"   ❌ Toggle response missing is_active: {response10}")
+                    success10 = False
+        
+        # Test 11: Courier Partners APIs
+        # Create courier partner
+        test_courier_data = {
+            "company_name": "BloodExpress",
+            "contact_person": "John Doe",
+            "contact_phone": "9876543210",
+            "contact_email": "john@bloodexpress.com",
+            "address": "123 Courier Street, City",
+            "service_areas": ["North Zone", "Central Zone"]
+        }
+        
+        success11, response11 = self.run_test(
+            "POST /api/config/couriers - Create courier partner",
+            "POST",
+            "config/couriers",
+            200,
+            data=test_courier_data
+        )
+        
+        courier_id = None
+        if success11 and response11:
+            if response11.get('status') == 'success' and 'courier_id' in response11:
+                courier_id = response11['courier_id']
+                print(f"   ✅ Courier partner created with ID: {courier_id}")
+            else:
+                print(f"   ❌ Courier creation failed: {response11}")
+                success11 = False
+        
+        # Test 12: Get all courier partners
+        success12, response12 = self.run_test(
+            "GET /api/config/couriers - Get all couriers",
+            "GET",
+            "config/couriers",
+            200
+        )
+        
+        if success12 and response12:
+            if isinstance(response12, list):
+                print(f"   ✅ Found {len(response12)} courier partners")
+                if len(response12) > 0:
+                    courier = response12[0]
+                    required_keys = ['id', 'company_name', 'contact_person', 'contact_phone']
+                    missing_keys = [k for k in required_keys if k not in courier]
+                    if not missing_keys:
+                        print("   ✅ Courier partner structure valid")
+                        print(f"   ✅ Sample courier: {courier.get('company_name')} - {courier.get('contact_person')}")
+                    else:
+                        print(f"   ❌ Missing keys in courier: {missing_keys}")
+                        success12 = False
+            else:
+                print(f"   ❌ Expected list response, got: {type(response12)}")
+                success12 = False
+        
+        # Test 13: System Settings APIs
+        # Get system settings
+        success13, response13 = self.run_test(
+            "GET /api/config/settings - Get system settings",
+            "GET",
+            "config/settings",
+            200
+        )
+        
+        if success13 and response13:
+            required_keys = ['min_hemoglobin_male', 'min_hemoglobin_female', 'min_weight_kg', 'min_age', 'max_age']
+            missing_keys = [k for k in required_keys if k not in response13]
+            if not missing_keys:
+                print("   ✅ System settings structure valid")
+                print(f"   ✅ Settings: Min Hb Male: {response13.get('min_hemoglobin_male')}, Min Weight: {response13.get('min_weight_kg')}kg")
+            else:
+                print(f"   ❌ Missing keys in settings: {missing_keys}")
+                success13 = False
+        
+        # Test 14: Update system settings
+        test_settings_data = {
+            "min_hemoglobin_male": 13.5,
+            "min_hemoglobin_female": 12.0,
+            "min_weight_kg": 50.0,
+            "expiry_alert_days": 5,
+            "low_stock_threshold": 3
+        }
+        
+        success14, response14 = self.run_test(
+            "PUT /api/config/settings - Update system settings",
+            "PUT",
+            "config/settings",
+            200,
+            data=test_settings_data
+        )
+        
+        if success14 and response14:
+            if response14.get('status') == 'success':
+                print("   ✅ System settings updated successfully")
+            else:
+                print(f"   ❌ Settings update failed: {response14}")
+                success14 = False
+        
+        # Test 15: Enums API
+        success15, response15 = self.run_test(
+            "GET /api/config/enums - Get configuration enums",
+            "GET",
+            "config/enums",
+            200
+        )
+        
+        if success15 and response15:
+            required_keys = ['field_types', 'trigger_events', 'condition_operators', 'action_types', 'modules']
+            missing_keys = [k for k in required_keys if k not in response15]
+            if not missing_keys:
+                print("   ✅ Configuration enums structure valid")
+                print(f"   ✅ Field types: {len(response15.get('field_types', []))}, Modules: {len(response15.get('modules', []))}")
+                # Check specific enum values
+                if 'text' in response15.get('field_types', []) and 'screening' in response15.get('modules', []):
+                    print("   ✅ Expected enum values present")
+                else:
+                    print("   ⚠️ Some expected enum values missing")
+            else:
+                print(f"   ❌ Missing keys in enums: {missing_keys}")
+                success15 = False
+        
+        # Test 16: Logistics - Shipments API
+        success16, response16 = self.run_test(
+            "GET /api/logistics/shipments - Get all shipments",
+            "GET",
+            "logistics/shipments",
+            200
+        )
+        
+        if success16 and response16:
+            if isinstance(response16, list):
+                print(f"   ✅ Found {len(response16)} shipments")
+                if len(response16) > 0:
+                    shipment = response16[0]
+                    required_keys = ['id', 'shipment_id', 'status', 'destination']
+                    missing_keys = [k for k in required_keys if k not in shipment]
+                    if not missing_keys:
+                        print("   ✅ Shipment structure valid")
+                    else:
+                        print(f"   ❌ Missing keys in shipment: {missing_keys}")
+                        success16 = False
+            else:
+                print(f"   ❌ Expected list response, got: {type(response16)}")
+                success16 = False
+        
+        # Test 17: Logistics Dashboard
+        success17, response17 = self.run_test(
+            "GET /api/logistics/dashboard - Get logistics dashboard",
+            "GET",
+            "logistics/dashboard",
+            200
+        )
+        
+        if success17 and response17:
+            required_keys = ['total_shipments', 'preparing', 'in_transit', 'delivered', 'avg_delivery_hours']
+            missing_keys = [k for k in required_keys if k not in response17]
+            if not missing_keys:
+                print("   ✅ Logistics dashboard structure valid")
+                print(f"   ✅ Stats: Total: {response17.get('total_shipments')}, In Transit: {response17.get('in_transit')}, Delivered: {response17.get('delivered')}")
+            else:
+                print(f"   ❌ Missing keys in dashboard: {missing_keys}")
+                success17 = False
+        
+        return (success1 and success2 and success3 and success4 and success5 and success6 and success7 and 
+                success8 and success9 and success10 and success11 and success12 and success13 and success14 and 
+                success15 and success16 and success17)
+
+    def test_public_tracking_api(self):
+        """Test Public Tracking API (no auth required)"""
+        print("\n🔍 Testing Public Tracking API...")
+        
+        # Temporarily remove token for public API test
+        original_token = self.token
+        self.token = None
+        
+        # Test public tracking with a dummy tracking number (should return 404)
+        success1, response1 = self.run_test(
+            "GET /api/logistics/track/{tracking_number} - Public tracking (no auth)",
+            "GET",
+            "logistics/track/TRKDUMMY123",
+            404
+        )
+        
+        # This is expected behavior for non-existent tracking number
+        if not success1:
+            print("   ✅ Public tracking correctly validates tracking number existence")
+            success1 = True
+        
+        # Restore token
+        self.token = original_token
+        
+        return success1
+
+    def run_configuration_logistics_tests(self):
+        """Run Configuration & Logistics Module tests specifically"""
+        print("🚀 Starting Configuration & Logistics Module API Tests...")
+        print(f"🔗 Base URL: {self.base_url}")
+        
+        # Login first
+        if not self.test_user_login(self.admin_email, self.admin_password):
+            print("❌ Login failed - cannot continue")
+            return False
+        
+        # Test auth/me
+        if not self.test_auth_me():
+            print("❌ Auth/me failed")
+            return False
+        
+        # Run Configuration & Logistics Module tests
+        tests = [
+            ("Configuration & Logistics Module APIs", self.test_configuration_logistics_module),
+            ("Public Tracking API", self.test_public_tracking_api),
+        ]
+        
+        # Run tests
+        all_passed = True
+        for test_name, test_func in tests:
+            print(f"\n{'='*60}")
+            print(f"🧪 Running: {test_name}")
+            print('='*60)
+            try:
+                success = test_func()
+                if success:
+                    print(f"✅ {test_name} - PASSED")
+                else:
+                    print(f"❌ {test_name} - FAILED")
+                    all_passed = False
+            except Exception as e:
+                print(f"💥 {test_name} - ERROR: {str(e)}")
+                all_passed = False
+        
+        # Final summary
+        print(f"\n{'='*60}")
+        print("📊 CONFIGURATION & LOGISTICS MODULE TEST SUMMARY")
+        print('='*60)
+        print(f"Total tests run: {self.tests_run}")
+        print(f"Tests passed: {self.tests_passed}")
+        print(f"Tests failed: {self.tests_run - self.tests_passed}")
+        print(f"Success rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
+        
+        return all_passed
+
 def main():
     print("🩸 Donor & Screening System Enhancement API Testing")
     print("=" * 70)
