@@ -39,6 +39,28 @@ export const authAPI = {
   me: () => api.get('/auth/me'),
 };
 
+// Organization APIs
+export const organizationAPI = {
+  // Public (no auth)
+  getPublicOrgs: () => api.get('/organizations/public'),
+  
+  // Authenticated
+  getAll: (params) => api.get('/organizations', { params }),
+  getOne: (id) => api.get(`/organizations/${id}`),
+  getHierarchy: () => api.get('/organizations/hierarchy'),
+  create: (data) => api.post('/organizations', data),
+  update: (id, data) => api.put(`/organizations/${id}`, data),
+  deactivate: (id) => api.delete(`/organizations/${id}`),
+  getInventorySummary: (id, includeChildren = false) => 
+    api.get(`/organizations/${id}/inventory-summary`, { params: { include_children: includeChildren } }),
+  
+  // External organizations
+  getExternalOrgs: (params) => api.get('/organizations/external/list', { params }),
+  createExternalOrg: (data) => api.post('/organizations/external', data),
+  updateExternalOrg: (id, data) => api.put(`/organizations/external/${id}`, data),
+  getExternalOrgHistory: (id) => api.get(`/organizations/external/${id}/history`),
+};
+
 // Public Donor APIs (no auth required)
 export const publicDonorAPI = {
   register: (data) => api.post('/public/donor-register', data),
