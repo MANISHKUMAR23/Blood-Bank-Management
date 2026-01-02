@@ -111,10 +111,58 @@ class Donor(BaseModel):
     # Health questionnaire
     health_questionnaire: Optional[dict] = None
     questionnaire_date: Optional[str] = None
+    # Deactivation fields
+    is_active: bool = True
+    deactivation_reason: Optional[str] = None
+    deactivation_notes: Optional[str] = None
+    deactivation_proof_url: Optional[str] = None
+    deactivated_by: Optional[str] = None
+    deactivated_at: Optional[str] = None
+    reactivation_history: List[dict] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: Optional[str] = None
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_by: Optional[str] = None
+
+
+class DonorReward(BaseModel):
+    """Donor rewards and leaderboard tracking"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    donor_id: str
+    points_earned: int = 0
+    total_donations: int = 0
+    tier: str = "bronze"  # bronze, silver, gold, platinum
+    badges: List[dict] = []  # [{"badge": "first_donation", "earned_at": "..."}]
+    last_donation_points: int = 0
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class DonationSession(BaseModel):
+    """Track donation process from screening to collection"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str = ""
+    donor_id: str
+    donation_id: Optional[str] = None
+    screening_id: Optional[str] = None
+    unit_id: Optional[str] = None
+    # Timestamps
+    screening_started_at: Optional[str] = None
+    screening_completed_at: Optional[str] = None
+    screening_status: Optional[str] = None  # eligible, rejected
+    collection_started_at: Optional[str] = None
+    collection_completed_at: Optional[str] = None
+    # Stage tracking
+    current_stage: str = "screening"  # screening, collection, completed, rejected, cancelled
+    rejection_reason: Optional[str] = None
+    cancelled_reason: Optional[str] = None
+    cancelled_by: Optional[str] = None
+    # Metadata
+    started_by: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class DonorCreate(BaseModel):
     full_name: str
