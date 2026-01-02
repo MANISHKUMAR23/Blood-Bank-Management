@@ -21,7 +21,8 @@ from routers import (
     storage_router, pre_lab_qc_router, notifications_router,
     logistics_router, labels_router, inventory_enhanced_router,
     relationships_router, donors_enhanced_router,
-    configuration_router, logistics_enhanced_router
+    configuration_router, logistics_enhanced_router,
+    organizations_router
 )
 
 # Configure logging
