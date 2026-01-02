@@ -1,5 +1,19 @@
 from enum import Enum
 
+# Organization Types
+class OrgType(str, Enum):
+    HOSPITAL_NETWORK = "hospital_network"
+    BLOOD_BANK_CHAIN = "blood_bank_chain"
+    STANDALONE = "standalone"
+    BRANCH = "branch"
+
+# User Types for Multi-Tenancy
+class UserType(str, Enum):
+    SYSTEM_ADMIN = "system_admin"  # Above all orgs
+    SUPER_ADMIN = "super_admin"    # Parent org admin
+    TENANT_ADMIN = "tenant_admin"  # Branch admin
+    STAFF = "staff"                # Regular staff
+
 class UserRole(str, Enum):
     ADMIN = "admin"
     REGISTRATION = "registration"
@@ -38,8 +52,10 @@ class UnitStatus(str, Enum):
     READY_TO_USE = "ready_to_use"
     RESERVED = "reserved"
     ISSUED = "issued"
+    ISSUED_EXTERNAL = "issued_external"  # For external distributions
     RETURNED = "returned"
     DISCARDED = "discarded"
+    TRANSFERRED = "transferred"  # For inter-org transfers
 
 class ScreeningResult(str, Enum):
     NON_REACTIVE = "non_reactive"
@@ -80,3 +96,19 @@ class DonorRequestStatus(str, Enum):
 class DonorRequestType(str, Enum):
     NEW_REGISTRATION = "new_registration"
     UPDATE = "update"
+
+# Inter-Organization Request Status
+class InterOrgRequestStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    FULFILLED = "fulfilled"
+    DISPATCHED = "dispatched"
+    DELIVERED = "delivered"
+    CANCELLED = "cancelled"
+
+# Urgency Levels
+class UrgencyLevel(str, Enum):
+    ROUTINE = "routine"
+    URGENT = "urgent"
+    EMERGENCY = "emergency"
