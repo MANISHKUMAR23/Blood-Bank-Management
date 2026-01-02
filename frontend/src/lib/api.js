@@ -393,6 +393,14 @@ export const configAPI = {
   
   // Enums
   getEnums: () => api.get('/config/enums'),
+  
+  // Custom Storage Types
+  getStorageTypes: (params) => api.get('/config/storage-types', { params }),
+  getStorageType: (typeCode) => api.get(`/config/storage-types/${typeCode}`),
+  createStorageType: (data) => api.post('/config/storage-types', null, { params: data }),
+  updateStorageType: (typeCode, data) => api.put(`/config/storage-types/${typeCode}`, null, { params: data }),
+  toggleStorageType: (typeCode) => api.put(`/config/storage-types/${typeCode}/toggle`),
+  deleteStorageType: (typeCode) => api.delete(`/config/storage-types/${typeCode}`),
 };
 
 // Enhanced Logistics APIs
