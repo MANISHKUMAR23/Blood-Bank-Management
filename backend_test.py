@@ -3928,19 +3928,19 @@ class BloodBankAPITester:
         return all_passed
 
 def main():
-    print("🩸 Custom Storage Types Feature API Testing")
+    print("🏢 Multi-Tenancy System Phase 1 Backend API Testing")
     print("=" * 70)
     
     tester = BloodBankAPITester()
     
-    # Run the Custom Storage Types tests as per review request
-    success = tester.run_custom_storage_types_tests()
+    # Run the Multi-Tenancy System Phase 1 tests as per review request
+    success = tester.run_multi_tenancy_tests()
     
     if success:
-        print("\n🎉 All Custom Storage Types API tests passed!")
+        print("\n🎉 All Multi-Tenancy System Phase 1 API tests passed!")
         return 0
     else:
-        print("\n💥 Some Custom Storage Types API tests failed!")
+        print("\n💥 Some Multi-Tenancy System Phase 1 API tests failed!")
         return 1
 
 if __name__ == "__main__":
