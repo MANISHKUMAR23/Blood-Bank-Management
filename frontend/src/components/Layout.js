@@ -5,7 +5,7 @@ import {
   Users, Droplet, Clipboard, FlaskConical, Layers, ShieldCheck,
   Package, ClipboardList, Truck, RotateCcw, Trash2, BarChart3,
   Settings, LogOut, Menu, X, Sun, Moon, Home, Microscope, UserPlus, Bell,
-  Warehouse, ClipboardCheck, Navigation, Trophy, Cog
+  Warehouse, ClipboardCheck, Navigation, Trophy, Cog, Building2
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
