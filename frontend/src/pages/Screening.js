@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { donorAPI, screeningAPI } from '../lib/api';
+import { donorAPI, screeningAPI, donationSessionAPI } from '../lib/api';
 import { toast } from 'sonner';
 import { 
   Search, Clipboard, CheckCircle, XCircle, AlertTriangle, 
   RefreshCw, Clock, Users, UserCheck, UserX, ChevronRight,
-  Calendar, Activity
+  Calendar, Activity, ChevronDown, ChevronUp, User, FileText,
+  Heart, Pill, Droplet, Scale
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -18,8 +19,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { ScrollArea } from '../components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
 
 const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+// Age calculation utility
+const calculateAge = (dob) => {
+  if (!dob) return null;
+  const birth = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+// BMI calculation
+const calculateBMI = (weight, height) => {
+  if (!weight || !height) return null;
+  const heightM = height / 100;
+  return (weight / (heightM * heightM)).toFixed(1);
+};
 
 export default function Screening() {
   const navigate = useNavigate();
@@ -41,6 +63,12 @@ export default function Screening() {
   const [showScreeningForm, setShowScreeningForm] = useState(false);
   const [showResultDialog, setShowResultDialog] = useState(false);
   const [screeningResult, setScreeningResult] = useState(null);
+  
+  // Registration info collapsible state
+  const [showRegistrationInfo, setShowRegistrationInfo] = useState(true);
+  
+  // Active session
+  const [activeSession, setActiveSession] = useState(null);
 
   const [formData, setFormData] = useState({
     screening_date: new Date().toISOString().split('T')[0],
