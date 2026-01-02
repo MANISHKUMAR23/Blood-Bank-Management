@@ -4,7 +4,10 @@ from .enums import (
     DiscardReason, DonorRequestStatus, DonorRequestType
 )
 from .user import User, UserCreate, UserLogin, UserResponse
-from .donor import Donor, DonorCreate, DonorRequest, DonorRequestCreate, DonorOTP
+from .donor import (
+    Donor, DonorCreate, DonorRequest, DonorRequestCreate, DonorOTP,
+    DonorReward, DonationSession, DEACTIVATION_REASONS, REWARD_TIERS, POINTS_CONFIG
+)
 from .screening import Screening, ScreeningCreate
 from .donation import Donation, DonationCreate
 from .blood_unit import BloodUnit, ChainOfCustody, ChainOfCustodyCreate
