@@ -1764,7 +1764,7 @@ class BloodBankAPITester:
                 "component_type": "plasma",
                 "blood_group": "A+",
                 "quantity": 1,
-                "urgency_level": "normal",
+                "urgency_level": "routine",  # Fixed: should be "routine" not "normal"
                 "clinical_indication": "Routine procedure"
             }
             
