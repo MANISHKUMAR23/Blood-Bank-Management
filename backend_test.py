@@ -1843,7 +1843,7 @@ class BloodBankAPITester:
                 "component_type": "platelets",
                 "blood_group": "B+",
                 "quantity": 1,
-                "urgency_level": "normal",
+                "urgency_level": "routine",  # Fixed: should be "routine" not "normal"
                 "clinical_indication": "Test cancellation"
             }
             
