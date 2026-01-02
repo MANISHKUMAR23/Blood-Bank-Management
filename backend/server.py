@@ -89,21 +89,81 @@ app.include_router(organizations_router, prefix="/api")
 
 
 async def create_default_admin():
-    """Create default admin user if none exists"""
+    """Create default organization and admin user if none exists"""
+    # Create default organization if none exists
+    default_org = await db.organizations.find_one({"org_name": "BloodLink Central"})
+    if not default_org:
+        default_org_id = str(uuid.uuid4())
+        default_org = {
+            "id": default_org_id,
+            "org_name": "BloodLink Central",
+            "org_type": "standalone",
+            "parent_org_id": None,
+            "is_parent": True,
+            "address": "Central Blood Bank",
+            "city": "Main City",
+            "state": "State",
+            "country": "Country",
+            "contact_person": "Admin",
+            "contact_email": "admin@bloodbank.com",
+            "license_number": "LIC-001",
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.organizations.insert_one(default_org)
+        logger.info(f"Default organization created: BloodLink Central (ID: {default_org_id})")
+    else:
+        default_org_id = default_org["id"]
+    
+    # Create or update default admin user
     admin_exists = await db.users.find_one({"email": "admin@bloodbank.com"})
     if not admin_exists:
         admin_user = {
             "id": str(uuid.uuid4()),
             "email": "admin@bloodbank.com",
             "password_hash": hash_password("adminpassword"),
-            "full_name": "Admin User",
+            "full_name": "System Admin",
             "role": "admin",
+            "org_id": None,  # System admin has no specific org
+            "user_type": "system_admin",
             "is_active": True,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
         await db.users.insert_one(admin_user)
-        logger.info("Default admin user created: admin@bloodbank.com")
+        logger.info("Default system admin user created: admin@bloodbank.com")
+    else:
+        # Update existing admin to be system admin
+        if admin_exists.get("user_type") != "system_admin":
+            await db.users.update_one(
+                {"email": "admin@bloodbank.com"},
+                {"$set": {
+                    "user_type": "system_admin",
+                    "org_id": None,
+                    "full_name": "System Admin",
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            logger.info("Upgraded admin to system_admin")
+    
+    # Migrate existing data - add org_id to collections that don't have it
+    collections_to_migrate = [
+        "donors", "donations", "screenings", "blood_units", "components",
+        "lab_tests", "storage_locations", "blood_requests", "issuances",
+        "discards", "returns", "logistics", "notifications", "quarantine",
+        "qc_validations", "pre_lab_qc", "chain_custody"
+    ]
+    
+    for collection_name in collections_to_migrate:
+        collection = db[collection_name]
+        # Update documents that don't have org_id
+        result = await collection.update_many(
+            {"org_id": {"$exists": False}},
+            {"$set": {"org_id": default_org_id}}
+        )
+        if result.modified_count > 0:
+            logger.info(f"Migrated {result.modified_count} documents in {collection_name} to org_id: {default_org_id}")
 
 
 if __name__ == "__main__":
