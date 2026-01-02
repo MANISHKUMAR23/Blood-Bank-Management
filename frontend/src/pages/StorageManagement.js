@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { storageAPI, configAPI } from '../lib/api';
 import { toast } from 'sonner';
 import { 
-  Package, Plus, Edit2, Thermometer, AlertTriangle, RefreshCw,
-  Warehouse, MapPin, CheckCircle, XCircle
+  Package, Plus, Thermometer, AlertTriangle, RefreshCw,
+  Warehouse, CheckCircle, XCircle
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Textarea } from '../components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
