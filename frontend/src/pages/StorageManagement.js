@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { storageAPI } from '../lib/api';
+import { storageAPI, configAPI } from '../lib/api';
 import { toast } from 'sonner';
 import { 
   Package, Plus, Edit2, Thermometer, AlertTriangle, RefreshCw,
@@ -15,17 +15,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Progress } from '../components/ui/progress';
 
-const STORAGE_TYPES = [
-  { value: 'refrigerator', label: 'Refrigerator', temp: '2-6°C', icon: '🧊' },
-  { value: 'freezer', label: 'Freezer', temp: '-25 to -30°C', icon: '❄️' },
-  { value: 'platelet_incubator', label: 'Platelet Incubator', temp: '20-24°C', icon: '🔬' },
-  { value: 'quarantine_area', label: 'Quarantine Area', temp: 'Variable', icon: '⚠️' },
-];
-
 export default function StorageManagement() {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [storageTypes, setStorageTypes] = useState([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -47,17 +41,27 @@ export default function StorageManagement() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [locRes, summaryRes] = await Promise.all([
+      const [locRes, summaryRes, typesRes] = await Promise.all([
         storageAPI.getAll(),
-        storageAPI.getSummary()
+        storageAPI.getSummary(),
+        configAPI.getStorageTypes({ is_active: true })
       ]);
       setLocations(locRes.data);
       setSummary(summaryRes.data);
+      setStorageTypes(typesRes.data);
     } catch (error) {
       toast.error('Failed to fetch storage data');
     } finally {
       setLoading(false);
     }
+  };
+
+  const getStorageTypeInfo = (typeCode) => {
+    return storageTypes.find(t => t.type_code === typeCode) || { 
+      type_name: typeCode, 
+      icon: '📦', 
+      default_temp_range: 'N/A' 
+    };
   };
 
   const handleCreate = async () => {
@@ -78,6 +82,15 @@ export default function StorageManagement() {
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to create storage location');
     }
+  };
+
+  const handleTypeChange = (typeCode) => {
+    const typeInfo = getStorageTypeInfo(typeCode);
+    setFormData({
+      ...formData,
+      storage_type: typeCode,
+      temperature_range: typeInfo.default_temp_range || ''
+    });
   };
 
   const viewDetails = async (location) => {
