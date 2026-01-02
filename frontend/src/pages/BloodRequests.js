@@ -554,7 +554,7 @@ export default function BloodRequests() {
           <Card>
             <CardHeader>
               <CardTitle>My Blood Requests</CardTitle>
-              <CardDescription>Requests you've made to other organizations</CardDescription>
+              <CardDescription>Requests you&apos;ve made to other organizations</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
