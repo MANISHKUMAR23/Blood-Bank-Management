@@ -259,6 +259,96 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Active Donation Sessions */}
+      {activeSessions.length > 0 && (
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-white" data-testid="active-sessions">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-blue-800">
+              <PlayCircle className="w-5 h-5" />
+              Active Donation Sessions
+            </CardTitle>
+            <CardDescription>Donors currently in the donation workflow</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3">
+              {activeSessions.slice(0, 5).map((session) => (
+                <div 
+                  key={session.id || session.session_id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-white border border-blue-100 hover:shadow-sm transition-shadow cursor-pointer"
+                  onClick={() => {
+                    if (session.current_stage === 'screening') {
+                      navigate(`/screening?donor=${session.donor_id}&session=${session.session_id}`);
+                    } else if (session.current_stage === 'collection') {
+                      navigate(`/collection?donor=${session.donor_id}&screening=${session.screening_id}`);
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      session.current_stage === 'screening' 
+                        ? 'bg-amber-100 text-amber-700' 
+                        : 'bg-red-100 text-red-700'
+                    }`}>
+                      {session.current_stage === 'screening' ? (
+                        <Clipboard className="w-5 h-5" />
+                      ) : (
+                        <Droplet className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-800">{session.donor_name || 'Unknown'}</p>
+                      <p className="text-xs text-slate-500">{session.donor_code} • {session.blood_group || 'N/A'}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Progress indicator */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${
+                        session.screening_started_at ? 'bg-emerald-500' : 'bg-slate-200'
+                      }`}></div>
+                      <span className="text-xs text-slate-500">Screening</span>
+                      
+                      <div className={`w-8 h-0.5 ${
+                        session.screening_completed_at ? 'bg-emerald-500' : 'bg-slate-200'
+                      }`}></div>
+                      
+                      <div className={`w-3 h-3 rounded-full ${
+                        session.current_stage === 'collection' ? 'bg-red-500' : 'bg-slate-200'
+                      }`}></div>
+                      <span className="text-xs text-slate-500">Collection</span>
+                      
+                      <div className={`w-8 h-0.5 ${
+                        session.collection_completed_at ? 'bg-emerald-500' : 'bg-slate-200'
+                      }`}></div>
+                      
+                      <div className={`w-3 h-3 rounded-full ${
+                        session.current_stage === 'completed' ? 'bg-emerald-500' : 'bg-slate-200'
+                      }`}></div>
+                      <span className="text-xs text-slate-500">Done</span>
+                    </div>
+                    
+                    <Badge className={
+                      session.current_stage === 'screening' 
+                        ? 'bg-amber-100 text-amber-700' 
+                        : 'bg-red-100 text-red-700'
+                    }>
+                      {session.current_stage === 'screening' ? 'In Screening' : 'In Collection'}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+              
+              {activeSessions.length > 5 && (
+                <p className="text-sm text-center text-blue-600 cursor-pointer hover:underline" onClick={() => navigate('/screening')}>
+                  View all {activeSessions.length} active sessions →
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card data-testid="chart-inventory">
