@@ -3340,20 +3340,267 @@ class BloodBankAPITester:
         
         return all_passed
 
+    def test_custom_storage_types_apis(self):
+        """Test Custom Storage Types APIs as per review request"""
+        print("\n📦 Testing Custom Storage Types APIs...")
+        
+        # Test 1: GET /api/config/storage-types - Should return 5 storage types (4 default + 1 custom)
+        success1, response1 = self.run_test(
+            "GET /api/config/storage-types - Get all storage types",
+            "GET",
+            "config/storage-types",
+            200
+        )
+        
+        # Validate storage types structure and count
+        if success1 and response1:
+            if isinstance(response1, list):
+                print(f"   ✅ Found {len(response1)} storage types")
+                
+                # Check for default types
+                default_types = ["refrigerator", "freezer", "platelet_incubator", "quarantine_area"]
+                found_defaults = [st for st in response1 if st.get("type_code") in default_types and not st.get("is_custom", True)]
+                
+                if len(found_defaults) == 4:
+                    print("   ✅ All 4 default storage types found")
+                    for dt in found_defaults:
+                        if dt.get("is_custom") == False:
+                            print(f"   ✅ Default type: {dt.get('type_name')} - is_custom: {dt.get('is_custom')}")
+                        else:
+                            print(f"   ❌ Default type {dt.get('type_name')} has incorrect is_custom flag")
+                            success1 = False
+                else:
+                    print(f"   ❌ Expected 4 default types, found {len(found_defaults)}")
+                    success1 = False
+                
+                # Check for custom types
+                custom_types = [st for st in response1 if st.get("is_custom", False)]
+                print(f"   ✅ Found {len(custom_types)} custom storage types")
+                
+                # Look for cryo_storage specifically
+                cryo_storage = next((st for st in response1 if st.get("type_code") == "cryo_storage"), None)
+                if cryo_storage:
+                    print(f"   ✅ Found cryo_storage custom type: {cryo_storage.get('type_name')}")
+                    if cryo_storage.get("is_custom") == True:
+                        print("   ✅ cryo_storage correctly marked as custom")
+                    else:
+                        print("   ❌ cryo_storage not marked as custom")
+                        success1 = False
+                else:
+                    print("   ⚠️ cryo_storage custom type not found - will create it in next test")
+                
+                # Validate expected total count (should be 5 if cryo_storage exists)
+                expected_count = 5 if cryo_storage else 4
+                if len(response1) >= expected_count:
+                    print(f"   ✅ Storage type count meets expectations ({len(response1)} >= {expected_count})")
+                else:
+                    print(f"   ❌ Expected at least {expected_count} storage types, found {len(response1)}")
+                    success1 = False
+            else:
+                print(f"   ❌ Expected list response, got: {type(response1)}")
+                success1 = False
+        
+        # Test 2: POST /api/config/storage-types - Create custom storage type
+        test_storage_data = {
+            "type_code": "blood_bank_fridge",
+            "type_name": "Blood Bank Fridge",
+            "default_temp_range": "1-4°C",
+            "icon": "🩸",
+            "color": "red",
+            "description": "Specialized fridge for blood products",
+            "suitable_for": ["whole_blood", "prc"]
+        }
+        
+        success2, response2 = self.run_test(
+            "POST /api/config/storage-types - Create custom storage type",
+            "POST",
+            "config/storage-types",
+            200,
+            data=test_storage_data
+        )
+        
+        # Validate creation response
+        if success2 and response2:
+            if response2.get("status") == "success" and "storage_type" in response2:
+                created_type = response2["storage_type"]
+                print(f"   ✅ Created storage type: {created_type.get('type_name')}")
+                
+                # Validate created type structure
+                required_keys = ["id", "type_code", "type_name", "default_temp_range", "is_custom"]
+                missing_keys = [k for k in required_keys if k not in created_type]
+                
+                if not missing_keys:
+                    print("   ✅ Created storage type structure valid")
+                    if created_type.get("is_custom") == True:
+                        print("   ✅ Created type correctly marked as custom")
+                    else:
+                        print("   ❌ Created type not marked as custom")
+                        success2 = False
+                    
+                    # Validate specific values
+                    if (created_type.get("type_code") == "blood_bank_fridge" and
+                        created_type.get("type_name") == "Blood Bank Fridge" and
+                        created_type.get("default_temp_range") == "1-4°C"):
+                        print("   ✅ Created type data matches test requirements")
+                    else:
+                        print("   ❌ Created type data doesn't match test requirements")
+                        success2 = False
+                else:
+                    print(f"   ❌ Missing keys in created type: {missing_keys}")
+                    success2 = False
+            else:
+                print("   ❌ Missing status or storage_type in creation response")
+                success2 = False
+        
+        # Test 3: PUT /api/config/storage-types/{type_code} - Update custom storage type
+        update_data = {
+            "description": "Updated description"
+        }
+        
+        success3, response3 = self.run_test(
+            "PUT /api/config/storage-types/blood_bank_fridge - Update custom storage type",
+            "PUT",
+            "config/storage-types/blood_bank_fridge",
+            200,
+            data=update_data
+        )
+        
+        # Validate update response
+        if success3 and response3:
+            if response3.get("status") == "success":
+                print("   ✅ Storage type updated successfully")
+            else:
+                print("   ❌ Update response missing success status")
+                success3 = False
+        
+        # Test 4: PUT /api/config/storage-types/{type_code}/toggle - Toggle custom storage type status
+        success4, response4 = self.run_test(
+            "PUT /api/config/storage-types/blood_bank_fridge/toggle - Toggle storage type status",
+            "PUT",
+            "config/storage-types/blood_bank_fridge/toggle",
+            200
+        )
+        
+        # Validate toggle response
+        if success4 and response4:
+            if response4.get("status") == "success" and "is_active" in response4:
+                new_status = response4["is_active"]
+                print(f"   ✅ Storage type status toggled to: {new_status}")
+            else:
+                print("   ❌ Toggle response missing status or is_active")
+                success4 = False
+        
+        # Test 5: DELETE /api/config/storage-types/{type_code} - Delete custom storage type
+        success5, response5 = self.run_test(
+            "DELETE /api/config/storage-types/blood_bank_fridge - Delete custom storage type",
+            "DELETE",
+            "config/storage-types/blood_bank_fridge",
+            200
+        )
+        
+        # Validate deletion response
+        if success5 and response5:
+            if response5.get("status") == "success":
+                print("   ✅ Storage type deleted successfully")
+            else:
+                print("   ❌ Delete response missing success status")
+                success5 = False
+        
+        # Test 6: Verify default types cannot be modified - Try to update "refrigerator"
+        success6, response6 = self.run_test(
+            "PUT /api/config/storage-types/refrigerator - Try to update default type (should fail)",
+            "PUT",
+            "config/storage-types/refrigerator",
+            400,  # Should return 400 error
+            data={"description": "This should fail"}
+        )
+        
+        # This should fail with 400 error
+        if success6:
+            print("   ✅ Default type modification correctly rejected with 400 error")
+        else:
+            print("   ❌ Default type modification should return 400 error")
+            success6 = False
+        
+        # Test 7: Verify default types cannot be deleted - Try to delete "refrigerator"
+        success7, response7 = self.run_test(
+            "DELETE /api/config/storage-types/refrigerator - Try to delete default type (should fail)",
+            "DELETE",
+            "config/storage-types/refrigerator",
+            400  # Should return 400 error
+        )
+        
+        # This should fail with 400 error
+        if success7:
+            print("   ✅ Default type deletion correctly rejected with 400 error")
+        else:
+            print("   ❌ Default type deletion should return 400 error")
+            success7 = False
+        
+        return success1 and success2 and success3 and success4 and success5 and success6 and success7
+
+    def run_custom_storage_types_tests(self):
+        """Run Custom Storage Types feature tests as per review request"""
+        print("🩸 Custom Storage Types Feature Testing")
+        print("=" * 70)
+        
+        # Login first
+        if not self.test_user_login(self.admin_email, self.admin_password):
+            print("❌ Failed to login - cannot proceed with tests")
+            return False
+        
+        # Test auth/me to get user info
+        if not self.test_auth_me():
+            print("❌ Failed to get user info - cannot proceed with tests")
+            return False
+        
+        # Define tests to run
+        tests = [
+            ("Custom Storage Types APIs", self.test_custom_storage_types_apis),
+        ]
+        
+        # Run tests
+        all_passed = True
+        for test_name, test_func in tests:
+            print(f"\n{'='*60}")
+            print(f"🧪 Running: {test_name}")
+            print('='*60)
+            try:
+                success = test_func()
+                if success:
+                    print(f"✅ {test_name} - PASSED")
+                else:
+                    print(f"❌ {test_name} - FAILED")
+                    all_passed = False
+            except Exception as e:
+                print(f"💥 {test_name} - ERROR: {str(e)}")
+                all_passed = False
+        
+        # Final summary
+        print(f"\n{'='*60}")
+        print("📊 CUSTOM STORAGE TYPES TEST SUMMARY")
+        print('='*60)
+        print(f"Total tests run: {self.tests_run}")
+        print(f"Tests passed: {self.tests_passed}")
+        print(f"Tests failed: {self.tests_run - self.tests_passed}")
+        print(f"Success rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
+        
+        return all_passed
+
 def main():
-    print("🩸 Donor & Screening System Enhancement API Testing")
+    print("🩸 Custom Storage Types Feature API Testing")
     print("=" * 70)
     
     tester = BloodBankAPITester()
     
-    # Run the Donor & Screening System Enhancement tests as per review request
-    success = tester.run_enhanced_collection_tests()
+    # Run the Custom Storage Types tests as per review request
+    success = tester.run_custom_storage_types_tests()
     
     if success:
-        print("\n🎉 All Donor & Screening System Enhancement API tests passed!")
+        print("\n🎉 All Custom Storage Types API tests passed!")
         return 0
     else:
-        print("\n💥 Some Donor & Screening System Enhancement API tests failed!")
+        print("\n💥 Some Custom Storage Types API tests failed!")
         return 1
 
 if __name__ == "__main__":
