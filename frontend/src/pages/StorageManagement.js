@@ -512,6 +512,108 @@ export default function StorageManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create Custom Storage Type Dialog */}
+      <Dialog open={showCreateTypeDialog} onOpenChange={setShowCreateTypeDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Custom Storage Type</DialogTitle>
+            <DialogDescription>Define a new storage type for blood products</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Type Code *</Label>
+                <Input 
+                  value={newTypeData.type_code} 
+                  onChange={(e) => setNewTypeData({...newTypeData, type_code: e.target.value.toLowerCase().replace(/\s/g, '_')})}
+                  placeholder="e.g., cryo_storage"
+                />
+                <p className="text-xs text-slate-500 mt-1">Unique ID (no spaces)</p>
+              </div>
+              <div>
+                <Label>Display Name *</Label>
+                <Input 
+                  value={newTypeData.type_name} 
+                  onChange={(e) => setNewTypeData({...newTypeData, type_name: e.target.value})}
+                  placeholder="e.g., Cryo Storage"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Temperature Range *</Label>
+                <Input 
+                  value={newTypeData.default_temp_range} 
+                  onChange={(e) => setNewTypeData({...newTypeData, default_temp_range: e.target.value})}
+                  placeholder="e.g., -196°C"
+                />
+              </div>
+              <div>
+                <Label>Icon (Emoji)</Label>
+                <Input 
+                  value={newTypeData.icon} 
+                  onChange={(e) => setNewTypeData({...newTypeData, icon: e.target.value})}
+                  placeholder="📦"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label>Description</Label>
+              <Textarea 
+                value={newTypeData.description} 
+                onChange={(e) => setNewTypeData({...newTypeData, description: e.target.value})}
+                placeholder="Optional description"
+                rows={2}
+              />
+            </div>
+            
+            <div>
+              <Label>Suitable For (comma separated)</Label>
+              <Input 
+                value={(newTypeData.suitable_for || []).join(', ')} 
+                onChange={(e) => setNewTypeData({
+                  ...newTypeData, 
+                  suitable_for: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                })}
+                placeholder="e.g., stem_cells, cord_blood"
+              />
+            </div>
+            
+            <div>
+              <Label>Color Theme</Label>
+              <Select value={newTypeData.color} onValueChange={(v) => setNewTypeData({...newTypeData, color: v})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="slate">Slate (Gray)</SelectItem>
+                  <SelectItem value="blue">Blue</SelectItem>
+                  <SelectItem value="indigo">Indigo</SelectItem>
+                  <SelectItem value="purple">Purple</SelectItem>
+                  <SelectItem value="red">Red</SelectItem>
+                  <SelectItem value="orange">Orange</SelectItem>
+                  <SelectItem value="amber">Amber</SelectItem>
+                  <SelectItem value="green">Green</SelectItem>
+                  <SelectItem value="teal">Teal</SelectItem>
+                  <SelectItem value="cyan">Cyan</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateTypeDialog(false)}>Cancel</Button>
+            <Button onClick={handleCreateType} className="bg-teal-600 hover:bg-teal-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Type
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
