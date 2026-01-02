@@ -77,6 +77,37 @@ export const donorAPI = {
   update: (id, data) => api.put(`/donors/${id}`, data),
   checkEligibility: (id) => api.get(`/donors/${id}/eligibility`),
   getHistory: (id) => api.get(`/donors/${id}/history`),
+  // Enhanced APIs
+  getFullProfile: (id) => api.get(`/donors/${id}/full-profile`),
+  getDonorsWithStatus: (params) => api.get('/donors-with-status', { params }),
+  deactivate: (id, formData) => api.post(`/donors/${id}/deactivate`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  reactivate: (id, reason) => api.post(`/donors/${id}/reactivate`, null, { params: { reason } }),
+  getEligibleForScreening: (params) => api.get('/screening/eligible-donors', { params }),
+};
+
+// Donation Session APIs
+export const donationSessionAPI = {
+  create: (donorId) => api.post('/donation-sessions', null, { params: { donor_id: donorId } }),
+  getAll: (params) => api.get('/donation-sessions', { params }),
+  getById: (id) => api.get(`/donation-sessions/${id}`),
+  completeScreening: (id, screeningId, status, rejectionReason) => 
+    api.put(`/donation-sessions/${id}/complete-screening`, null, { 
+      params: { screening_id: screeningId, status, rejection_reason: rejectionReason } 
+    }),
+  completeCollection: (id, donationId, unitId) => 
+    api.put(`/donation-sessions/${id}/complete-collection`, null, { 
+      params: { donation_id: donationId, unit_id: unitId } 
+    }),
+  cancel: (id, reason) => api.put(`/donation-sessions/${id}/cancel`, null, { params: { reason } }),
+};
+
+// Rewards & Leaderboard APIs
+export const rewardsAPI = {
+  getDonorRewards: (donorId) => api.get(`/donor-rewards/${donorId}`),
+  getLeaderboard: (period = 'all_time', limit = 50) => 
+    api.get('/leaderboard', { params: { period, limit } }),
 };
 
 // Screening APIs
