@@ -3,7 +3,7 @@ import { storageAPI, configAPI } from '../lib/api';
 import { toast } from 'sonner';
 import { 
   Package, Plus, Edit2, Thermometer, AlertTriangle, RefreshCw,
-  Warehouse, MapPin, CheckCircle, XCircle, PlusCircle
+  Warehouse, MapPin, CheckCircle, XCircle
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -23,7 +23,6 @@ export default function StorageManagement() {
   const [storageTypes, setStorageTypes] = useState([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-  const [showCreateTypeDialog, setShowCreateTypeDialog] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locationDetails, setLocationDetails] = useState(null);
   
@@ -34,16 +33,6 @@ export default function StorageManagement() {
     capacity: '',
     location_code: '',
     facility: ''
-  });
-
-  const [newTypeData, setNewTypeData] = useState({
-    type_code: '',
-    type_name: '',
-    default_temp_range: '',
-    icon: '📦',
-    color: 'slate',
-    description: '',
-    suitable_for: []
   });
 
   useEffect(() => {
@@ -96,38 +85,7 @@ export default function StorageManagement() {
     }
   };
 
-  const handleCreateType = async () => {
-    if (!newTypeData.type_code || !newTypeData.type_name || !newTypeData.default_temp_range) {
-      toast.error('Type code, name, and temperature range are required');
-      return;
-    }
-    
-    try {
-      await configAPI.createStorageType(newTypeData);
-      toast.success('Custom storage type created!');
-      setShowCreateTypeDialog(false);
-      setNewTypeData({
-        type_code: '',
-        type_name: '',
-        default_temp_range: '',
-        icon: '📦',
-        color: 'slate',
-        description: '',
-        suitable_for: []
-      });
-      // Refresh storage types
-      const typesRes = await configAPI.getStorageTypes({ is_active: true });
-      setStorageTypes(typesRes.data);
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to create storage type');
-    }
-  };
-
   const handleTypeChange = (typeCode) => {
-    if (typeCode === '__create_new__') {
-      setShowCreateTypeDialog(true);
-      return;
-    }
     const typeInfo = getStorageTypeInfo(typeCode);
     setFormData({
       ...formData,
@@ -372,12 +330,6 @@ export default function StorageManagement() {
                       {type.icon} {type.type_name} ({type.default_temp_range})
                     </SelectItem>
                   ))}
-                  <SelectItem value="__create_new__" className="text-teal-600 font-medium border-t mt-1 pt-1">
-                    <div className="flex items-center gap-2">
-                      <PlusCircle className="w-4 h-4" />
-                      Create New Storage Type...
-                    </div>
-                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -513,107 +465,6 @@ export default function StorageManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Custom Storage Type Dialog */}
-      <Dialog open={showCreateTypeDialog} onOpenChange={setShowCreateTypeDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create Custom Storage Type</DialogTitle>
-            <DialogDescription>Define a new storage type for blood products</DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Type Code *</Label>
-                <Input 
-                  value={newTypeData.type_code} 
-                  onChange={(e) => setNewTypeData({...newTypeData, type_code: e.target.value.toLowerCase().replace(/\s/g, '_')})}
-                  placeholder="e.g., cryo_storage"
-                />
-                <p className="text-xs text-slate-500 mt-1">Unique ID (no spaces)</p>
-              </div>
-              <div>
-                <Label>Display Name *</Label>
-                <Input 
-                  value={newTypeData.type_name} 
-                  onChange={(e) => setNewTypeData({...newTypeData, type_name: e.target.value})}
-                  placeholder="e.g., Cryo Storage"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Temperature Range *</Label>
-                <Input 
-                  value={newTypeData.default_temp_range} 
-                  onChange={(e) => setNewTypeData({...newTypeData, default_temp_range: e.target.value})}
-                  placeholder="e.g., -196°C"
-                />
-              </div>
-              <div>
-                <Label>Icon (Emoji)</Label>
-                <Input 
-                  value={newTypeData.icon} 
-                  onChange={(e) => setNewTypeData({...newTypeData, icon: e.target.value})}
-                  placeholder="📦"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label>Description</Label>
-              <Textarea 
-                value={newTypeData.description} 
-                onChange={(e) => setNewTypeData({...newTypeData, description: e.target.value})}
-                placeholder="Optional description"
-                rows={2}
-              />
-            </div>
-            
-            <div>
-              <Label>Suitable For (comma separated)</Label>
-              <Input 
-                value={(newTypeData.suitable_for || []).join(', ')} 
-                onChange={(e) => setNewTypeData({
-                  ...newTypeData, 
-                  suitable_for: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
-                })}
-                placeholder="e.g., stem_cells, cord_blood"
-              />
-            </div>
-            
-            <div>
-              <Label>Color Theme</Label>
-              <Select value={newTypeData.color} onValueChange={(v) => setNewTypeData({...newTypeData, color: v})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="slate">Slate (Gray)</SelectItem>
-                  <SelectItem value="blue">Blue</SelectItem>
-                  <SelectItem value="indigo">Indigo</SelectItem>
-                  <SelectItem value="purple">Purple</SelectItem>
-                  <SelectItem value="red">Red</SelectItem>
-                  <SelectItem value="orange">Orange</SelectItem>
-                  <SelectItem value="amber">Amber</SelectItem>
-                  <SelectItem value="green">Green</SelectItem>
-                  <SelectItem value="teal">Teal</SelectItem>
-                  <SelectItem value="cyan">Cyan</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateTypeDialog(false)}>Cancel</Button>
-            <Button onClick={handleCreateType} className="bg-teal-600 hover:bg-teal-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Type
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
