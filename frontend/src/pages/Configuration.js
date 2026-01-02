@@ -357,7 +357,7 @@ export default function Configuration() {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-6 w-full max-w-3xl">
+        <TabsList className="grid grid-cols-7 w-full max-w-4xl">
           <TabsTrigger value="forms" className="flex items-center gap-1">
             <FileText className="w-4 h-4" />
             Forms
@@ -369,6 +369,10 @@ export default function Configuration() {
           <TabsTrigger value="triggers" className="flex items-center gap-1">
             <Zap className="w-4 h-4" />
             Triggers
+          </TabsTrigger>
+          <TabsTrigger value="storage" className="flex items-center gap-1">
+            <Warehouse className="w-4 h-4" />
+            Storage
           </TabsTrigger>
           <TabsTrigger value="vehicles" className="flex items-center gap-1">
             <Truck className="w-4 h-4" />
