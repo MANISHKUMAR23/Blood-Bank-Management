@@ -31,8 +31,23 @@ async def create_inter_org_request(
     - External: Request from/to external organization
     """
     user_org_id = access.get_default_org_id()
-    if not user_org_id:
+    
+    # System admins can create requests on behalf of any organization
+    if not user_org_id and not access.is_system_admin():
         raise HTTPException(status_code=400, detail="User must belong to an organization")
+    
+    # For system admins, use the fulfilling org as the requesting org for testing purposes
+    # In a real scenario, system admins would specify which org they're creating the request for
+    if access.is_system_admin() and not user_org_id:
+        if request_data.request_type == "internal" and request_data.fulfilling_org_id:
+            user_org_id = request_data.fulfilling_org_id
+        else:
+            # Get the first available organization for system admin
+            first_org = await db.organizations.find_one({"is_active": True}, {"id": 1, "_id": 0})
+            if first_org:
+                user_org_id = first_org["id"]
+            else:
+                raise HTTPException(status_code=400, detail="No organizations available")
     
     # Validate request type
     if request_data.request_type == "internal":
@@ -45,7 +60,8 @@ async def create_inter_org_request(
             raise HTTPException(status_code=404, detail="Fulfilling organization not found")
         
         # Check user has access to request from this org (must be in same network)
-        if not access.can_access(request_data.fulfilling_org_id):
+        # System admins can access any org
+        if not access.is_system_admin() and not access.can_access(request_data.fulfilling_org_id):
             raise HTTPException(status_code=403, detail="Cannot request from this organization")
     
     elif request_data.request_type == "external":
