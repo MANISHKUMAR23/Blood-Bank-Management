@@ -3,11 +3,12 @@ import { storageAPI, configAPI } from '../lib/api';
 import { toast } from 'sonner';
 import { 
   Package, Plus, Edit2, Thermometer, AlertTriangle, RefreshCw,
-  Warehouse, MapPin, CheckCircle, XCircle
+  Warehouse, MapPin, CheckCircle, XCircle, PlusCircle
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
@@ -22,6 +23,7 @@ export default function StorageManagement() {
   const [storageTypes, setStorageTypes] = useState([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showCreateTypeDialog, setShowCreateTypeDialog] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [locationDetails, setLocationDetails] = useState(null);
   
@@ -32,6 +34,16 @@ export default function StorageManagement() {
     capacity: '',
     location_code: '',
     facility: ''
+  });
+
+  const [newTypeData, setNewTypeData] = useState({
+    type_code: '',
+    type_name: '',
+    default_temp_range: '',
+    icon: '📦',
+    color: 'slate',
+    description: '',
+    suitable_for: []
   });
 
   useEffect(() => {
@@ -84,7 +96,38 @@ export default function StorageManagement() {
     }
   };
 
+  const handleCreateType = async () => {
+    if (!newTypeData.type_code || !newTypeData.type_name || !newTypeData.default_temp_range) {
+      toast.error('Type code, name, and temperature range are required');
+      return;
+    }
+    
+    try {
+      await configAPI.createStorageType(newTypeData);
+      toast.success('Custom storage type created!');
+      setShowCreateTypeDialog(false);
+      setNewTypeData({
+        type_code: '',
+        type_name: '',
+        default_temp_range: '',
+        icon: '📦',
+        color: 'slate',
+        description: '',
+        suitable_for: []
+      });
+      // Refresh storage types
+      const typesRes = await configAPI.getStorageTypes({ is_active: true });
+      setStorageTypes(typesRes.data);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to create storage type');
+    }
+  };
+
   const handleTypeChange = (typeCode) => {
+    if (typeCode === '__create_new__') {
+      setShowCreateTypeDialog(true);
+      return;
+    }
     const typeInfo = getStorageTypeInfo(typeCode);
     setFormData({
       ...formData,
