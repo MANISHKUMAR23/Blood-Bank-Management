@@ -781,12 +781,7 @@ async def create_storage_type(
 @router.put("/storage-types/{type_code}")
 async def update_storage_type(
     type_code: str,
-    type_name: Optional[str] = None,
-    default_temp_range: Optional[str] = None,
-    description: Optional[str] = None,
-    icon: Optional[str] = None,
-    color: Optional[str] = None,
-    suitable_for: Optional[List[str]] = None,
+    data: dict,
     current_user: dict = Depends(get_current_user)
 ):
     """Update a custom storage type"""
@@ -803,18 +798,18 @@ async def update_storage_type(
         raise HTTPException(status_code=404, detail="Custom storage type not found")
     
     update_data = {}
-    if type_name is not None:
-        update_data["type_name"] = type_name
-    if default_temp_range is not None:
-        update_data["default_temp_range"] = default_temp_range
-    if description is not None:
-        update_data["description"] = description
-    if icon is not None:
-        update_data["icon"] = icon
-    if color is not None:
-        update_data["color"] = color
-    if suitable_for is not None:
-        update_data["suitable_for"] = suitable_for
+    if data.get("type_name") is not None:
+        update_data["type_name"] = data["type_name"]
+    if data.get("default_temp_range") is not None:
+        update_data["default_temp_range"] = data["default_temp_range"]
+    if data.get("description") is not None:
+        update_data["description"] = data["description"]
+    if data.get("icon") is not None:
+        update_data["icon"] = data["icon"]
+    if data.get("color") is not None:
+        update_data["color"] = data["color"]
+    if data.get("suitable_for") is not None:
+        update_data["suitable_for"] = data["suitable_for"]
     
     if update_data:
         update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
