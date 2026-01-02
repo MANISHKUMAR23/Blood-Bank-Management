@@ -34,6 +34,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Configuration from "./pages/Configuration";
 import LogisticsEnhanced from "./pages/LogisticsEnhanced";
 import PublicTracking from "./pages/PublicTracking";
+import Organizations from "./pages/Organizations";
 import "./App.css";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
