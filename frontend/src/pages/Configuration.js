@@ -86,6 +86,7 @@ export default function Configuration() {
   const [vehicles, setVehicles] = useState([]);
   const [couriers, setCouriers] = useState([]);
   const [settings, setSettings] = useState({});
+  const [storageTypes, setStorageTypes] = useState([]);
   
   // Dialog states
   const [showFormEditor, setShowFormEditor] = useState(false);
@@ -93,6 +94,7 @@ export default function Configuration() {
   const [showVehicleDialog, setShowVehicleDialog] = useState(false);
   const [showCourierDialog, setShowCourierDialog] = useState(false);
   const [showFieldDialog, setShowFieldDialog] = useState(false);
+  const [showStorageTypeDialog, setShowStorageTypeDialog] = useState(false);
   
   // Edit states
   const [selectedForm, setSelectedForm] = useState(null);
@@ -100,6 +102,7 @@ export default function Configuration() {
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [selectedCourier, setSelectedCourier] = useState(null);
   const [editingField, setEditingField] = useState(null);
+  const [selectedStorageType, setSelectedStorageType] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -108,13 +111,14 @@ export default function Configuration() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [formsRes, rulesRes, triggersRes, vehiclesRes, couriersRes, settingsRes] = await Promise.all([
+      const [formsRes, rulesRes, triggersRes, vehiclesRes, couriersRes, settingsRes, storageTypesRes] = await Promise.all([
         configAPI.getForms(),
         configAPI.getRules(),
         configAPI.getTriggers(),
         configAPI.getVehicles(),
         configAPI.getCouriers(),
         configAPI.getSettings(),
+        configAPI.getStorageTypes(),
       ]);
       setForms(formsRes.data);
       setRules(rulesRes.data);
@@ -122,6 +126,7 @@ export default function Configuration() {
       setVehicles(vehiclesRes.data);
       setCouriers(couriersRes.data);
       setSettings(settingsRes.data);
+      setStorageTypes(storageTypesRes.data);
     } catch (error) {
       toast.error('Failed to load configuration data');
     } finally {
