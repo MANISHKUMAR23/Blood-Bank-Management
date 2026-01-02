@@ -1587,6 +1587,326 @@ class BloodBankAPITester:
         
         return success1 and success1a and success1b and success2 and success3 and success4 and success5 and success5a and success6 and success7
 
+    def test_multi_tenancy_apis(self):
+        """Test Multi-Tenancy System Phase 1 Backend APIs as per review request"""
+        print("\n🏢 Testing Multi-Tenancy System Phase 1 Backend APIs...")
+        
+        # Test 1: GET /api/organizations/public - Public organizations list (no auth required)
+        # Temporarily clear token for public endpoint
+        temp_token = self.token
+        self.token = None
+        
+        success1, response1 = self.run_test(
+            "GET /api/organizations/public - Public organizations list",
+            "GET",
+            "organizations/public",
+            200
+        )
+        
+        # Restore token
+        self.token = temp_token
+        
+        # Validate public organizations response
+        default_org_id = None
+        if success1 and response1:
+            if isinstance(response1, list):
+                print(f"   ✅ Found {len(response1)} public organizations")
+                # Look for BloodLink Central
+                bloodlink_central = None
+                for org in response1:
+                    if org.get("org_name") == "BloodLink Central":
+                        bloodlink_central = org
+                        default_org_id = org.get("id")
+                        break
+                
+                if bloodlink_central:
+                    print(f"   ✅ Found BloodLink Central organization (ID: {default_org_id})")
+                    required_keys = ['id', 'org_name', 'org_type', 'city', 'state']
+                    missing_keys = [k for k in required_keys if k not in bloodlink_central]
+                    if not missing_keys:
+                        print("   ✅ Public organization structure valid")
+                    else:
+                        print(f"   ❌ Missing keys in public org: {missing_keys}")
+                        success1 = False
+                else:
+                    print("   ❌ BloodLink Central organization not found")
+                    success1 = False
+            else:
+                print(f"   ❌ Expected list response, got: {type(response1)}")
+                success1 = False
+        
+        # Test 2: POST /api/auth/login - Login without org_id (system admin)
+        success2, response2 = self.run_test(
+            "POST /api/auth/login - System admin login without org_id",
+            "POST",
+            "auth/login",
+            200,
+            data={
+                "email": self.admin_email,
+                "password": self.admin_password
+                # No org_id for system admin
+            }
+        )
+        
+        # Validate login response for system admin
+        if success2 and response2:
+            if 'token' in response2 and 'user' in response2:
+                user = response2['user']
+                if user.get('user_type') == 'system_admin' and user.get('org_id') is None:
+                    print("   ✅ System admin login successful - user_type: system_admin, org_id: null")
+                    # Update token for subsequent tests
+                    self.token = response2['token']
+                else:
+                    print(f"   ❌ Unexpected user type or org_id: {user.get('user_type')}, {user.get('org_id')}")
+                    success2 = False
+            else:
+                print("   ❌ Missing token or user in login response")
+                success2 = False
+        
+        # Test 3: GET /api/organizations - List all accessible organizations
+        success3, response3 = self.run_test(
+            "GET /api/organizations - List accessible organizations",
+            "GET",
+            "organizations",
+            200
+        )
+        
+        # Validate organizations list
+        if success3 and response3:
+            if isinstance(response3, list):
+                print(f"   ✅ Found {len(response3)} accessible organizations")
+                if len(response3) > 0:
+                    org = response3[0]
+                    required_keys = ['id', 'org_name', 'org_type', 'is_active']
+                    missing_keys = [k for k in required_keys if k not in org]
+                    if not missing_keys:
+                        print("   ✅ Organization list structure valid")
+                        # Check for enrichment fields
+                        if 'staff_count' in org and 'inventory_count' in org:
+                            print(f"   ✅ Organization enrichment working: staff_count: {org.get('staff_count')}, inventory_count: {org.get('inventory_count')}")
+                    else:
+                        print(f"   ❌ Missing keys in organization: {missing_keys}")
+                        success3 = False
+            else:
+                print(f"   ❌ Expected list response, got: {type(response3)}")
+                success3 = False
+        
+        # Test 4: GET /api/organizations/hierarchy - Get organization tree view
+        success4, response4 = self.run_test(
+            "GET /api/organizations/hierarchy - Organization hierarchy",
+            "GET",
+            "organizations/hierarchy",
+            200
+        )
+        
+        # Validate hierarchy response
+        if success4 and response4:
+            if isinstance(response4, list):
+                print(f"   ✅ Found {len(response4)} root organizations in hierarchy")
+                if len(response4) > 0:
+                    root_org = response4[0]
+                    required_keys = ['id', 'org_name', 'children']
+                    missing_keys = [k for k in required_keys if k not in root_org]
+                    if not missing_keys:
+                        print("   ✅ Hierarchy structure valid")
+                        children_count = len(root_org.get('children', []))
+                        print(f"   ✅ Root organization has {children_count} children")
+                    else:
+                        print(f"   ❌ Missing keys in hierarchy: {missing_keys}")
+                        success4 = False
+            else:
+                print(f"   ❌ Expected list response, got: {type(response4)}")
+                success4 = False
+        
+        # Test 5: POST /api/organizations - Create a new branch (test as system admin)
+        branch_data = {
+            "org_name": "North Branch",
+            "org_type": "branch",
+            "parent_org_id": default_org_id,
+            "city": "North City",
+            "state": "State",
+            "country": "Country",
+            "contact_person": "Branch Manager",
+            "contact_email": "north@bloodbank.com",
+            "license_number": "LIC-NORTH-001"
+        }
+        
+        success5 = False
+        new_branch_id = None
+        if default_org_id:
+            success5, response5 = self.run_test(
+                "POST /api/organizations - Create new branch",
+                "POST",
+                "organizations",
+                200,
+                data=branch_data
+            )
+            
+            # Validate branch creation response
+            if success5 and response5:
+                required_keys = ['id', 'org_name', 'org_type', 'parent_org_id']
+                missing_keys = [k for k in required_keys if k not in response5]
+                if not missing_keys:
+                    new_branch_id = response5.get('id')
+                    print(f"   ✅ Branch created successfully (ID: {new_branch_id})")
+                    if (response5.get('org_name') == 'North Branch' and 
+                        response5.get('org_type') == 'branch' and
+                        response5.get('parent_org_id') == default_org_id):
+                        print("   ✅ Branch data matches creation request")
+                    else:
+                        print("   ❌ Branch data doesn't match creation request")
+                        success5 = False
+                else:
+                    print(f"   ❌ Missing keys in branch creation: {missing_keys}")
+                    success5 = False
+        else:
+            print("   ⚠️ Skipping branch creation - no default org ID available")
+            success5 = True  # Skip this test
+        
+        # Test 6: GET /api/organizations/{id} - Get single organization
+        success6 = False
+        if default_org_id:
+            success6, response6 = self.run_test(
+                "GET /api/organizations/{id} - Get single organization",
+                "GET",
+                f"organizations/{default_org_id}",
+                200
+            )
+            
+            # Validate single organization response
+            if success6 and response6:
+                required_keys = ['id', 'org_name', 'org_type', 'staff_count', 'inventory_count']
+                missing_keys = [k for k in required_keys if k not in response6]
+                if not missing_keys:
+                    print("   ✅ Single organization structure valid")
+                    print(f"   ✅ Organization: {response6.get('org_name')} - Staff: {response6.get('staff_count')}, Inventory: {response6.get('inventory_count')}")
+                else:
+                    print(f"   ❌ Missing keys in single organization: {missing_keys}")
+                    success6 = False
+        else:
+            print("   ⚠️ Skipping single organization test - no default org ID available")
+            success6 = True  # Skip this test
+        
+        # Test 7: PUT /api/organizations/{id} - Update organization
+        success7 = False
+        if new_branch_id:
+            update_data = {
+                "org_name": "North Branch Updated",
+                "contact_person": "Updated Manager"
+            }
+            
+            success7, response7 = self.run_test(
+                "PUT /api/organizations/{id} - Update organization",
+                "PUT",
+                f"organizations/{new_branch_id}",
+                200,
+                data=update_data
+            )
+            
+            # Validate update response
+            if success7 and response7:
+                if (response7.get('org_name') == 'North Branch Updated' and
+                    response7.get('contact_person') == 'Updated Manager'):
+                    print("   ✅ Organization update successful")
+                else:
+                    print("   ❌ Organization update data doesn't match")
+                    success7 = False
+        else:
+            print("   ⚠️ Skipping organization update - no branch ID available")
+            success7 = True  # Skip this test
+        
+        # Test 8: GET /api/organizations/{id}/inventory-summary - Get inventory summary
+        success8 = False
+        if default_org_id:
+            success8, response8 = self.run_test(
+                "GET /api/organizations/{id}/inventory-summary - Inventory summary",
+                "GET",
+                f"organizations/{default_org_id}/inventory-summary",
+                200
+            )
+            
+            # Validate inventory summary response
+            if success8 and response8:
+                required_keys = ['total_inventory', 'by_blood_group', 'by_component_type', 'expiring_soon']
+                missing_keys = [k for k in required_keys if k not in response8]
+                if not missing_keys:
+                    print("   ✅ Inventory summary structure valid")
+                    print(f"   ✅ Total inventory: {response8.get('total_inventory')}, Expiring soon: {response8.get('expiring_soon')}")
+                    
+                    # Check blood group breakdown
+                    by_blood_group = response8.get('by_blood_group', {})
+                    if by_blood_group:
+                        print(f"   ✅ Blood group breakdown available: {len(by_blood_group)} groups")
+                    
+                    # Check component type breakdown
+                    by_component_type = response8.get('by_component_type', {})
+                    if by_component_type:
+                        print(f"   ✅ Component type breakdown available: {len(by_component_type)} types")
+                else:
+                    print(f"   ❌ Missing keys in inventory summary: {missing_keys}")
+                    success8 = False
+        else:
+            print("   ⚠️ Skipping inventory summary - no default org ID available")
+            success8 = True  # Skip this test
+        
+        # Test 9: POST /api/organizations/external - Create external organization
+        external_org_data = {
+            "org_name": "Regional Hospital Network",
+            "org_type": "hospital",
+            "contact_person": "Dr. Sarah Wilson",
+            "contact_email": "sarah.wilson@regionalhospital.com",
+            "contact_phone": "+1-555-0199",
+            "address": "456 Medical Plaza, Healthcare District",
+            "city": "Regional City",
+            "state": "State",
+            "country": "Country"
+        }
+        
+        success9, response9 = self.run_test(
+            "POST /api/organizations/external - Create external organization",
+            "POST",
+            "organizations/external",
+            200,
+            data=external_org_data
+        )
+        
+        external_org_id = None
+        if success9 and response9:
+            if 'id' in response9 and 'message' in response9:
+                external_org_id = response9.get('id')
+                print(f"   ✅ External organization created (ID: {external_org_id})")
+            else:
+                print("   ❌ Missing id or message in external org creation")
+                success9 = False
+        
+        # Test 10: GET /api/organizations/external/list - List external organizations
+        success10, response10 = self.run_test(
+            "GET /api/organizations/external/list - List external organizations",
+            "GET",
+            "organizations/external/list",
+            200
+        )
+        
+        # Validate external organizations list
+        if success10 and response10:
+            if isinstance(response10, list):
+                print(f"   ✅ Found {len(response10)} external organizations")
+                if len(response10) > 0:
+                    ext_org = response10[0]
+                    required_keys = ['id', 'org_name', 'org_type', 'contact_person']
+                    missing_keys = [k for k in required_keys if k not in ext_org]
+                    if not missing_keys:
+                        print("   ✅ External organization structure valid")
+                        print(f"   ✅ Sample external org: {ext_org.get('org_name')} - {ext_org.get('org_type')}")
+                    else:
+                        print(f"   ❌ Missing keys in external org: {missing_keys}")
+                        success10 = False
+            else:
+                print(f"   ❌ Expected list response, got: {type(response10)}")
+                success10 = False
+        
+        return success1 and success2 and success3 and success4 and success5 and success6 and success7 and success8 and success9 and success10
+
     def test_custom_roles_apis(self):
         """Test Custom Roles & Permissions APIs as per review request"""
         print("\n👥 Testing Custom Roles & Permissions APIs...")
