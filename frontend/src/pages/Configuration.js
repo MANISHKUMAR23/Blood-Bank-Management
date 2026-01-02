@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import {
   Settings, FileText, GitBranch, Zap, Truck, Building2, Sliders,
   Plus, Edit, Trash2, Copy, ToggleLeft, ToggleRight, ChevronDown, ChevronUp,
-  GripVertical, Eye, Save, RefreshCw, Search, AlertTriangle, Check, X
+  GripVertical, Eye, Save, RefreshCw, Search, AlertTriangle, Check, X, Warehouse
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
