@@ -94,6 +94,7 @@ app.include_router(sessions_router, prefix="/api")
 app.include_router(documents_router, prefix="/api")
 app.include_router(compliance_router, prefix="/api")
 app.include_router(training_router, prefix="/api")
+app.include_router(security_router, prefix="/api")
 
 
 async def create_default_admin():
