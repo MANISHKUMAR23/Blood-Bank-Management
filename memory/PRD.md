@@ -109,16 +109,15 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 ## Prioritized Backlog
 
 ### P0 (Critical - Next)
-- [ ] **Phase E: Interactive Org & Branch Detail Pages** - Tabbed detail views for managing individual organizations
+- [ ] **Phase F: Document Management** - Upload/manage licenses, certifications for organizations
 
 ### P1 (High Priority)
-- [ ] Phase F: Document Management (uploading/managing licenses)
-
-### P2 (Medium Priority)
 - [ ] Phase G: Compliance & Training Modules
 
-### P3 (Future)
+### P2 (Medium Priority)
 - [ ] Phase H: Full Security Suite (MFA, Password Policy, API Keys, Backups)
+
+### P3 (Future)
 - [ ] API Rate Limiting (deferred by user)
 
 ---
