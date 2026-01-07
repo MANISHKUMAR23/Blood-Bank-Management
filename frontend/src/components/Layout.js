@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Users, Droplet, Clipboard, FlaskConical, Layers, ShieldCheck,
   Package, ClipboardList, Truck, RotateCcw, Trash2, BarChart3,
   Settings, LogOut, Menu, X, Sun, Moon, Home, Microscope, UserPlus, Bell,
-  Warehouse, ClipboardCheck, Navigation, Trophy, Cog, Building2, ArrowLeftRight, Globe, History
+  Warehouse, ClipboardCheck, Navigation, Trophy, Cog, Building2, ArrowLeftRight, Globe, History,
+  RefreshCw, ChevronDown, ArrowLeft
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -16,7 +17,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from './ui/dropdown-menu';
+import { Badge } from './ui/badge';
 import NotificationBell from './NotificationBell';
 
 const roleLabels = {
