@@ -44,20 +44,23 @@ const USER_ROLES = [
 ];
 
 export default function Organizations() {
-  const { user, isSystemAdmin, isSuperAdmin } = useAuth();
+  const { user, isSystemAdmin, isSuperAdmin, isTenantAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [organizations, setOrganizations] = useState([]);
   const [hierarchy, setHierarchy] = useState([]);
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [inventorySummary, setInventorySummary] = useState(null);
+  const [orgUsers, setOrgUsers] = useState([]);
   
   // Dialogs
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showCreateWithAdminDialog, setShowCreateWithAdminDialog] = useState(false);
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [expandedOrgs, setExpandedOrgs] = useState({});
   
-  // Form data
+  // Form data for org
   const [formData, setFormData] = useState({
     org_name: '',
     org_type: 'standalone',
@@ -72,6 +75,35 @@ export default function Organizations() {
     contact_email: '',
     license_number: '',
   });
+  
+  // Form data for combined org + admin creation
+  const [orgWithAdminData, setOrgWithAdminData] = useState({
+    org_name: '',
+    org_type: 'standalone',
+    address: '',
+    city: '',
+    state: '',
+    country: '',
+    contact_phone: '',
+    license_number: '',
+    admin_email: '',
+    admin_password: '',
+    admin_full_name: '',
+    admin_phone: '',
+  });
+  
+  // Form data for adding user
+  const [userFormData, setUserFormData] = useState({
+    email: '',
+    password: '',
+    full_name: '',
+    phone: '',
+    role: 'registration',
+    user_type: 'staff',
+  });
+  
+  // For branch creation
+  const [parentOrgForBranch, setParentOrgForBranch] = useState(null);
 
   useEffect(() => {
     fetchData();
