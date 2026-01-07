@@ -171,6 +171,8 @@ export default function OrganizationDetail() {
       fetchInventory();
       fetchAuditLogs();
       fetchDocuments();
+      fetchCompliance();
+      fetchTraining();
       if (organization.is_parent) {
         fetchBranches();
       }
@@ -225,6 +227,34 @@ export default function OrganizationDetail() {
       setBranches(childBranches);
     } catch (error) {
       console.error('Failed to fetch branches:', error);
+    }
+  };
+
+  const fetchCompliance = async () => {
+    try {
+      const [dataRes, statsRes] = await Promise.all([
+        complianceAPI.getOrgCompliance(orgId),
+        complianceAPI.getOrgSummary(orgId)
+      ]);
+      setComplianceData(dataRes.data || []);
+      setComplianceStats(statsRes.data);
+    } catch (error) {
+      console.error('Failed to fetch compliance:', error);
+    }
+  };
+
+  const fetchTraining = async () => {
+    try {
+      const [recordsRes, statsRes, coursesRes] = await Promise.all([
+        trainingAPI.getOrgRecords(orgId),
+        trainingAPI.getOrgSummary(orgId),
+        trainingAPI.getCourses()
+      ]);
+      setTrainingRecords(recordsRes.data || []);
+      setTrainingStats(statsRes.data);
+      setCourses(coursesRes.data || []);
+    } catch (error) {
+      console.error('Failed to fetch training:', error);
     }
   };
 
