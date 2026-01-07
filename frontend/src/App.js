@@ -35,6 +35,7 @@ import Configuration from "./pages/Configuration";
 import LogisticsEnhanced from "./pages/LogisticsEnhanced";
 import PublicTracking from "./pages/PublicTracking";
 import Organizations from "./pages/Organizations";
+import OrganizationDetail from "./pages/OrganizationDetail";
 import BloodRequests from "./pages/BloodRequests";
 import NetworkDashboard from "./pages/NetworkDashboard";
 import AuditLogs from "./pages/AuditLogs";
