@@ -5,6 +5,7 @@ Handles multi-tenancy operations for the blood bank network.
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Optional
 from datetime import datetime, timezone
+from pydantic import BaseModel, EmailStr
 
 from database import db
 from models import (
@@ -12,9 +13,54 @@ from models import (
     ExternalOrganization, ExternalOrganizationCreate,
     UserType, OrgType
 )
-from services import get_current_user
+from services import get_current_user, hash_password
+import uuid
 
 router = APIRouter(prefix="/organizations", tags=["Organizations"])
+
+
+# ============== Combined Creation Models ==============
+
+class CreateOrgWithAdmin(BaseModel):
+    """Create organization with its admin in one request"""
+    # Organization fields
+    org_name: str
+    org_type: str = "standalone"
+    is_parent: bool = True
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    contact_person: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
+    license_number: Optional[str] = None
+    
+    # Admin user fields
+    admin_email: EmailStr
+    admin_password: str
+    admin_full_name: str
+    admin_phone: Optional[str] = None
+
+
+class CreateBranchWithAdmin(BaseModel):
+    """Create branch under parent org with tenant admin"""
+    # Branch fields
+    org_name: str
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    contact_person: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
+    license_number: Optional[str] = None
+    
+    # Admin user fields
+    admin_email: EmailStr
+    admin_password: str
+    admin_full_name: str
+    admin_phone: Optional[str] = None
 
 
 # ============== Helper Functions ==============
