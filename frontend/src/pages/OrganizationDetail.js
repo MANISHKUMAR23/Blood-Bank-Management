@@ -75,6 +75,32 @@ const DOC_TYPE_COLORS = {
   other: 'bg-gray-100 text-gray-700',
 };
 
+const COMPLIANCE_STATUS_COLORS = {
+  compliant: 'bg-green-100 text-green-700',
+  non_compliant: 'bg-red-100 text-red-700',
+  pending: 'bg-amber-100 text-amber-700',
+  expired: 'bg-red-100 text-red-700',
+  not_applicable: 'bg-slate-100 text-slate-600',
+};
+
+const TRAINING_STATUS_COLORS = {
+  completed: 'bg-green-100 text-green-700',
+  in_progress: 'bg-blue-100 text-blue-700',
+  not_started: 'bg-slate-100 text-slate-600',
+  expired: 'bg-red-100 text-red-700',
+  overdue: 'bg-amber-100 text-amber-700',
+};
+
+const TRAINING_CATEGORY_COLORS = {
+  safety: 'bg-red-100 text-red-700',
+  procedures: 'bg-blue-100 text-blue-700',
+  quality: 'bg-purple-100 text-purple-700',
+  emergency: 'bg-orange-100 text-orange-700',
+  compliance: 'bg-teal-100 text-teal-700',
+  technical: 'bg-indigo-100 text-indigo-700',
+  general: 'bg-slate-100 text-slate-600',
+};
+
 export default function OrganizationDetail() {
   const { orgId } = useParams();
   const navigate = useNavigate();
@@ -90,12 +116,22 @@ export default function OrganizationDetail() {
   const [docStats, setDocStats] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   
+  // Compliance & Training state
+  const [complianceData, setComplianceData] = useState([]);
+  const [complianceStats, setComplianceStats] = useState(null);
+  const [trainingRecords, setTrainingRecords] = useState([]);
+  const [trainingStats, setTrainingStats] = useState(null);
+  const [courses, setCourses] = useState([]);
+  
   // Dialogs
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showEditUserDialog, setShowEditUserDialog] = useState(false);
   const [showUploadDocDialog, setShowUploadDocDialog] = useState(false);
+  const [showAssignTrainingDialog, setShowAssignTrainingDialog] = useState(false);
+  const [showLinkDocDialog, setShowLinkDocDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedRequirement, setSelectedRequirement] = useState(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   
   // Form data
@@ -118,6 +154,11 @@ export default function OrganizationDetail() {
     issuing_authority: '',
     reference_number: '',
     tags: '',
+  });
+  const [trainingFormData, setTrainingFormData] = useState({
+    user_id: '',
+    course_id: '',
+    notes: '',
   });
 
   useEffect(() => {
