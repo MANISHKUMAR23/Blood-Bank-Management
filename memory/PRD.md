@@ -193,11 +193,13 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 - `/app/frontend/src/context/AuthContext.js` - Auth state + context switching
 - `/app/frontend/src/components/Layout.js` - Header with context switcher
 - `/app/frontend/src/pages/AuditLogs.js` - Audit trail viewer
-- `/app/frontend/src/pages/OrganizationDetail.js` - Org detail with Documents tab
+- `/app/frontend/src/pages/OrganizationDetail.js` - Org detail with Documents, Compliance, Training tabs
 
 ---
 
 ## Latest Test Reports
 - `/app/test_reports/iteration_5.json` - Phase B testing (100% pass rate)
 - `/app/test_reports/iteration_6.json` - Phase F Document Management (100% pass rate, 13 tests)
+- `/app/test_reports/iteration_7.json` - Phase G Compliance & Training (100% pass rate, 18 tests)
 - `/app/tests/test_phase_f_documents.py` - Document management API tests
+- `/app/tests/test_phase_g_compliance_training.py` - Compliance & Training API tests
