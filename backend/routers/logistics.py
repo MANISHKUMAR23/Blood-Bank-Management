@@ -9,6 +9,7 @@ sys.path.append('..')
 
 from database import db
 from services import get_current_user
+from middleware import ReadAccess, WriteAccess, OrgAccessHelper
 
 router = APIRouter(prefix="/logistics", tags=["Logistics"])
 
@@ -34,11 +35,15 @@ async def generate_shipment_id():
     return f"SHP-{today}-{str(count + 1).zfill(4)}"
 
 @router.post("/shipments")
-async def create_shipment(data: ShipmentCreate, current_user: dict = Depends(get_current_user)):
+async def create_shipment(
+    data: ShipmentCreate, 
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(WriteAccess)
+):
     """Create a new shipment for an issuance"""
     # Verify issuance exists
     issuance = await db.issuances.find_one(
-        {"$or": [{"id": data.issuance_id}, {"issue_id": data.issuance_id}]},
+        access.filter({"$or": [{"id": data.issuance_id}, {"issue_id": data.issuance_id}]}),
         {"_id": 0}
     )
     if not issuance:
@@ -65,7 +70,8 @@ async def create_shipment(data: ShipmentCreate, current_user: dict = Depends(get
         ],
         "temperature_log": [],
         "created_by": current_user["id"],
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "org_id": issuance.get("org_id") or access.get_default_org_id()
     }
     
     await db.shipments.insert_one(shipment)
@@ -75,21 +81,26 @@ async def create_shipment(data: ShipmentCreate, current_user: dict = Depends(get
 @router.get("/shipments")
 async def get_shipments(
     status: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(ReadAccess)
 ):
     """Get all shipments"""
     query = {}
     if status:
         query["status"] = status
     
-    shipments = await db.shipments.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    shipments = await db.shipments.find(access.filter(query), {"_id": 0}).sort("created_at", -1).to_list(1000)
     return shipments
 
 @router.get("/shipments/{shipment_id}")
-async def get_shipment(shipment_id: str, current_user: dict = Depends(get_current_user)):
+async def get_shipment(
+    shipment_id: str, 
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(ReadAccess)
+):
     """Get shipment details with tracking history"""
     shipment = await db.shipments.find_one(
-        {"$or": [{"id": shipment_id}, {"shipment_id": shipment_id}]},
+        access.filter({"$or": [{"id": shipment_id}, {"shipment_id": shipment_id}]}),
         {"_id": 0}
     )
     if not shipment:
@@ -219,19 +230,23 @@ async def deliver_shipment(
     return {"status": "success"}
 
 @router.get("/dashboard")
-async def get_logistics_dashboard(current_user: dict = Depends(get_current_user)):
+async def get_logistics_dashboard(
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(ReadAccess)
+):
     """Get logistics dashboard stats"""
-    total = await db.shipments.count_documents({})
-    preparing = await db.shipments.count_documents({"status": "preparing"})
-    in_transit = await db.shipments.count_documents({"status": "in_transit"})
-    delivered = await db.shipments.count_documents({"status": "delivered"})
+    org_filter = access.filter()
+    total = await db.shipments.count_documents(org_filter)
+    preparing = await db.shipments.count_documents({**org_filter, "status": "preparing"})
+    in_transit = await db.shipments.count_documents({**org_filter, "status": "in_transit"})
+    delivered = await db.shipments.count_documents({**org_filter, "status": "delivered"})
     
     # Get recent shipments
-    recent = await db.shipments.find({}, {"_id": 0}).sort("created_at", -1).limit(5).to_list(5)
+    recent = await db.shipments.find(org_filter, {"_id": 0}).sort("created_at", -1).limit(5).to_list(5)
     
     # Calculate average delivery time
     delivered_shipments = await db.shipments.find(
-        {"status": "delivered", "dispatch_time": {"$exists": True}, "delivery_time": {"$exists": True}},
+        {**org_filter, "status": "delivered", "dispatch_time": {"$exists": True}, "delivery_time": {"$exists": True}},
         {"_id": 0, "dispatch_time": 1, "delivery_time": 1}
     ).to_list(100)
     
