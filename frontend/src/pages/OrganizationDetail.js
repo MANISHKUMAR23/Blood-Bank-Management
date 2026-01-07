@@ -831,6 +831,203 @@ export default function OrganizationDetail() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Documents Tab */}
+        <TabsContent value="documents" className="mt-4">
+          <div className="space-y-6">
+            {/* Document Stats */}
+            {docStats && (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <File className="w-6 h-6 mx-auto text-blue-500 mb-1" />
+                      <p className="text-2xl font-bold">{docStats.total}</p>
+                      <p className="text-xs text-slate-500">Total Documents</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <FileCheck className="w-6 h-6 mx-auto text-green-500 mb-1" />
+                      <p className="text-2xl font-bold text-green-600">{docStats.verified}</p>
+                      <p className="text-xs text-slate-500">Verified</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <Clock className="w-6 h-6 mx-auto text-slate-400 mb-1" />
+                      <p className="text-2xl font-bold text-slate-600">{docStats.unverified}</p>
+                      <p className="text-xs text-slate-500">Pending</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <AlertTriangle className="w-6 h-6 mx-auto text-amber-500 mb-1" />
+                      <p className="text-2xl font-bold text-amber-600">{docStats.expiring_soon}</p>
+                      <p className="text-xs text-slate-500">Expiring Soon</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="text-center">
+                      <FileWarning className="w-6 h-6 mx-auto text-red-500 mb-1" />
+                      <p className="text-2xl font-bold text-red-600">{docStats.expired}</p>
+                      <p className="text-xs text-slate-500">Expired</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Documents List */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Organization Documents
+                  </CardTitle>
+                  <CardDescription>Licenses, certifications, and compliance documents</CardDescription>
+                </div>
+                {canEdit && (
+                  <Button onClick={() => { resetDocForm(); setShowUploadDocDialog(true); }} data-testid="upload-doc-btn">
+                    <Upload className="w-4 h-4 mr-1" />
+                    Upload Document
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent>
+                {documents.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                    <p className="text-slate-500">No documents uploaded yet</p>
+                    {canEdit && (
+                      <Button 
+                        variant="outline" 
+                        className="mt-4" 
+                        onClick={() => { resetDocForm(); setShowUploadDocDialog(true); }}
+                      >
+                        <Upload className="w-4 h-4 mr-1" />
+                        Upload First Document
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Expiry</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Uploaded</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {documents.map((doc) => (
+                        <TableRow key={doc.id} data-testid={`doc-row-${doc.id}`}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <File className="w-4 h-4 text-slate-400" />
+                              <div>
+                                <p className="font-medium">{doc.title}</p>
+                                <p className="text-xs text-slate-400">{doc.file_name}</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={DOC_TYPE_COLORS[doc.doc_type] || DOC_TYPE_COLORS.other}>
+                              {DOCUMENT_TYPES.find(t => t.value === doc.doc_type)?.label || doc.doc_type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {doc.expiry_date ? (
+                              <div>
+                                <p className={doc.is_expired ? 'text-red-600' : doc.days_until_expiry <= 30 ? 'text-amber-600' : ''}>
+                                  {formatDate(doc.expiry_date)}
+                                </p>
+                                {doc.days_until_expiry !== null && (
+                                  <p className={`text-xs ${doc.is_expired ? 'text-red-500' : doc.days_until_expiry <= 30 ? 'text-amber-500' : 'text-slate-400'}`}>
+                                    {doc.is_expired ? 'Expired' : `${doc.days_until_expiry} days left`}
+                                  </p>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400">No expiry</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {doc.is_verified ? (
+                                <Badge className="bg-green-100 text-green-700">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Verified
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-slate-100 text-slate-600">Pending</Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="text-sm">{formatDate(doc.created_at)}</p>
+                              <p className="text-xs text-slate-400">{formatFileSize(doc.file_size)}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleDownloadDocument(doc.id)}
+                                title="Download"
+                                data-testid={`download-doc-${doc.id}`}
+                              >
+                                <Download className="w-4 h-4" />
+                              </Button>
+                              {canEdit && !doc.is_verified && (isSystemAdmin() || isSuperAdmin()) && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-green-600"
+                                  onClick={() => handleVerifyDocument(doc.id)}
+                                  title="Verify"
+                                  data-testid={`verify-doc-${doc.id}`}
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </Button>
+                              )}
+                              {canEdit && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-red-500"
+                                  onClick={() => handleDeleteDocument(doc.id)}
+                                  title="Delete"
+                                  data-testid={`delete-doc-${doc.id}`}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
 
       {/* Edit Organization Dialog */}
