@@ -8,13 +8,18 @@ sys.path.append('..')
 from database import db
 from models import LabTest, LabTestCreate, Quarantine, UnitStatus, ScreeningResult
 from services import get_current_user
+from middleware import ReadAccess, WriteAccess, OrgAccessHelper
 
 router = APIRouter(prefix="/lab-tests", tags=["Laboratory"])
 
 @router.post("")
-async def create_lab_test(test_data: LabTestCreate, current_user: dict = Depends(get_current_user)):
+async def create_lab_test(
+    test_data: LabTestCreate, 
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(WriteAccess)
+):
     unit = await db.blood_units.find_one(
-        {"$or": [{"id": test_data.unit_id}, {"unit_id": test_data.unit_id}]},
+        access.filter({"$or": [{"id": test_data.unit_id}, {"unit_id": test_data.unit_id}]}),
         {"_id": 0}
     )
     if not unit:
@@ -22,6 +27,7 @@ async def create_lab_test(test_data: LabTestCreate, current_user: dict = Depends
     
     lab_test = LabTest(**test_data.model_dump())
     lab_test.tested_by = current_user["id"]
+    lab_test.org_id = unit.get("org_id") or access.get_default_org_id()
     
     results = [test_data.hiv_result, test_data.hbsag_result, test_data.hcv_result, test_data.syphilis_result]
     results = [r for r in results if r]
@@ -53,7 +59,8 @@ async def create_lab_test(test_data: LabTestCreate, current_user: dict = Depends
             unit_component_id=unit["id"],
             unit_type="unit",
             reason=f"Test result: {lab_test.overall_status}",
-            quarantine_date=datetime.now(timezone.utc).isoformat().split("T")[0]
+            quarantine_date=datetime.now(timezone.utc).isoformat().split("T")[0],
+            org_id=unit.get("org_id") or access.get_default_org_id()
         )
         q_doc = quarantine.model_dump()
         q_doc['created_at'] = q_doc['created_at'].isoformat()
@@ -74,7 +81,8 @@ async def create_lab_test(test_data: LabTestCreate, current_user: dict = Depends
 async def get_lab_tests(
     unit_id: Optional[str] = None,
     overall_status: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(ReadAccess)
 ):
     query = {}
     if unit_id:
@@ -82,12 +90,16 @@ async def get_lab_tests(
     if overall_status:
         query["overall_status"] = overall_status
     
-    tests = await db.lab_tests.find(query, {"_id": 0}).to_list(1000)
+    tests = await db.lab_tests.find(access.filter(query), {"_id": 0}).to_list(1000)
     return tests
 
 @router.get("/{test_id}")
-async def get_lab_test(test_id: str, current_user: dict = Depends(get_current_user)):
-    test = await db.lab_tests.find_one({"id": test_id}, {"_id": 0})
+async def get_lab_test(
+    test_id: str, 
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(ReadAccess)
+):
+    test = await db.lab_tests.find_one(access.filter({"id": test_id}), {"_id": 0})
     if not test:
         raise HTTPException(status_code=404, detail="Lab test not found")
     return test

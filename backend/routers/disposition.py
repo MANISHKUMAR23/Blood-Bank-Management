@@ -9,6 +9,7 @@ sys.path.append('..')
 from database import db
 from models import Return, Discard, UnitStatus, DiscardReason
 from services import get_current_user, generate_return_id, generate_discard_id
+from middleware import ReadAccess, WriteAccess, OrgAccessHelper
 
 return_router = APIRouter(prefix="/returns", tags=["Returns"])
 discard_router = APIRouter(prefix="/discards", tags=["Discards"])
@@ -46,10 +47,11 @@ class DiscardAuthorize(BaseModel):
 @return_router.post("")
 async def create_return(
     data: ReturnCreate,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(WriteAccess)
 ):
     component = await db.components.find_one(
-        {"$or": [{"id": data.component_id}, {"component_id": data.component_id}]},
+        access.filter({"$or": [{"id": data.component_id}, {"component_id": data.component_id}]}),
         {"_id": 0}
     )
     if not component:
@@ -60,7 +62,8 @@ async def create_return(
         component_id=component["id"],
         return_date=data.return_date,
         source=data.source,
-        reason=data.reason
+        reason=data.reason,
+        org_id=component.get("org_id") or access.get_default_org_id()
     )
     
     doc = return_record.model_dump()
@@ -83,7 +86,8 @@ async def create_return(
 @return_router.get("")
 async def get_returns(
     status: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(ReadAccess)
 ):
     query = {}
     if status == "pending":
@@ -93,17 +97,18 @@ async def get_returns(
     elif status == "rejected":
         query["decision"] = "reject"
     
-    returns = await db.returns.find(query, {"_id": 0}).to_list(1000)
+    returns = await db.returns.find(access.filter(query), {"_id": 0}).to_list(1000)
     return returns
 
 @return_router.put("/{return_id}/process")
 async def process_return(
     return_id: str,
     data: ReturnProcess,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(WriteAccess)
 ):
     return_record = await db.returns.find_one(
-        {"$or": [{"id": return_id}, {"return_id": return_id}]},
+        access.filter({"$or": [{"id": return_id}, {"return_id": return_id}]}),
         {"_id": 0}
     )
     if not return_record:
@@ -181,10 +186,11 @@ async def process_return(
 @discard_router.post("")
 async def create_discard(
     data: DiscardCreate,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(WriteAccess)
 ):
     component = await db.components.find_one(
-        {"$or": [{"id": data.component_id}, {"component_id": data.component_id}]},
+        access.filter({"$or": [{"id": data.component_id}, {"component_id": data.component_id}]}),
         {"_id": 0}
     )
     if not component:
@@ -201,7 +207,8 @@ async def create_discard(
         reason=data.reason,
         reason_details=data.reason_details,
         discard_date=data.discard_date,
-        processed_by=current_user["id"]
+        processed_by=current_user["id"],
+        org_id=component.get("org_id") or access.get_default_org_id()
     )
     
     doc = discard.model_dump()
@@ -237,7 +244,8 @@ async def get_discards(
     reason: Optional[str] = None,
     category: Optional[str] = None,
     pending_authorization: Optional[bool] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(ReadAccess)
 ):
     query = {}
     if reason:
@@ -248,16 +256,20 @@ async def get_discards(
         query["requires_authorization"] = True
         query["authorized"] = False
     
-    discards = await db.discards.find(query, {"_id": 0}).to_list(1000)
+    discards = await db.discards.find(access.filter(query), {"_id": 0}).to_list(1000)
     return discards
 
 @discard_router.get("/summary")
-async def get_discard_summary(current_user: dict = Depends(get_current_user)):
+async def get_discard_summary(
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(ReadAccess)
+):
     """Get discard summary statistics"""
-    total = await db.discards.count_documents({})
-    pending_auth = await db.discards.count_documents({"requires_authorization": True, "authorized": False})
-    pending_destruction = await db.discards.count_documents({"destruction_date": None, "authorized": True})
-    destroyed = await db.discards.count_documents({"destruction_date": {"$ne": None}})
+    org_filter = access.filter()
+    total = await db.discards.count_documents(org_filter)
+    pending_auth = await db.discards.count_documents({**org_filter, "requires_authorization": True, "authorized": False})
+    pending_destruction = await db.discards.count_documents({**org_filter, "destruction_date": None, "authorized": True})
+    destroyed = await db.discards.count_documents({**org_filter, "destruction_date": {"$ne": None}})
     
     # Count by reason
     by_reason = {}
