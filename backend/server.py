@@ -24,7 +24,7 @@ from routers import (
     configuration_router, logistics_enhanced_router,
     organizations_router, inter_org_requests_router,
     audit_logs_router, sessions_router, documents_router,
-    compliance_router, training_router
+    compliance_router, training_router, security_router
 )
 
 # Configure logging
