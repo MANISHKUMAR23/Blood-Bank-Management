@@ -81,6 +81,69 @@ export default function Layout() {
   const [loadingContexts, setLoadingContexts] = useState(false);
   const [switching, setSwitching] = useState(false);
 
+  // Determine if user is in global context (no org selected)
+  const isGlobalContext = useMemo(() => {
+    if (!user) return false;
+    // System admin with no org_id and not impersonating = global context
+    if (user.user_type === 'system_admin' && !user.org_id && !isImpersonating()) {
+      return true;
+    }
+    return false;
+  }, [user, isImpersonating]);
+
+  // Build dynamic navigation based on user type and context
+  const navItems = useMemo(() => {
+    if (!user) return [];
+    
+    const userType = user.user_type;
+    const userRole = user.role || 'admin';
+    const inOrgContext = !!user.org_id || isImpersonating();
+    
+    let items = [];
+    
+    // System Admin logic
+    if (userType === 'system_admin') {
+      if (!inOrgContext) {
+        // Global context - show only platform modules
+        items = [...platformModules];
+      } else {
+        // In org context - show operational modules + some admin modules
+        items = [
+          ...operationalModules.filter(item => 
+            !item.roles || item.roles.includes('admin')
+          ),
+          // Add some platform modules for admin visibility
+          { path: '/organizations', icon: Building2, label: 'Organizations', category: 'admin' },
+          { path: '/audit-logs', icon: History, label: 'Audit Logs', category: 'admin' },
+        ];
+      }
+    }
+    // Super Admin logic
+    else if (userType === 'super_admin') {
+      // Super admins see org-related platform modules + operational modules
+      items = [
+        ...operationalModules.filter(item => 
+          !item.roles || item.roles.includes('admin')
+        ),
+        { path: '/audit-logs', icon: History, label: 'Audit Logs', category: 'admin' },
+      ];
+    }
+    // Tenant Admin logic
+    else if (userType === 'tenant_admin') {
+      items = operationalModules.filter(item => 
+        !item.roles || item.roles.includes('admin')
+      );
+    }
+    // Staff users
+    else {
+      items = operationalModules.filter(item => 
+        item.roles && item.roles.includes(userRole)
+      );
+    }
+    
+    return items;
+  }, [user, isImpersonating]);
+
   const loadSwitchableContexts = async () => {
     setLoadingContexts(true);
     try {
@@ -105,6 +168,8 @@ export default function Layout() {
       await switchContext(orgId, userType);
       // Reload contexts after switching
       loadSwitchableContexts();
+      // Navigate to dashboard after context switch
+      navigate('/dashboard');
     } catch (error) {
       console.error('Failed to switch context:', error);
     } finally {
@@ -117,6 +182,8 @@ export default function Layout() {
     try {
       await exitContext();
       loadSwitchableContexts();
+      // Navigate to network overview after exiting context
+      navigate('/network');
     } catch (error) {
       console.error('Failed to exit context:', error);
     } finally {
