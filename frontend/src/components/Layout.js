@@ -66,10 +66,56 @@ const navItems = [
 ];
 
 export default function Layout() {
-  const { user, logout } = useAuth();
+  const { user, logout, isImpersonating, switchContext, exitContext, getSwitchableContexts, canSwitchContext, contextInfo } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const [switchableContexts, setSwitchableContexts] = useState([]);
+  const [loadingContexts, setLoadingContexts] = useState(false);
+  const [switching, setSwitching] = useState(false);
+
+  useEffect(() => {
+    if (canSwitchContext()) {
+      loadSwitchableContexts();
+    }
+  }, [user]);
+
+  const loadSwitchableContexts = async () => {
+    setLoadingContexts(true);
+    try {
+      const data = await getSwitchableContexts();
+      setSwitchableContexts(data.available_contexts || []);
+    } catch (error) {
+      console.error('Failed to load switchable contexts:', error);
+    } finally {
+      setLoadingContexts(false);
+    }
+  };
+
+  const handleSwitchContext = async (orgId, userType) => {
+    setSwitching(true);
+    try {
+      await switchContext(orgId, userType);
+      // Reload contexts after switching
+      loadSwitchableContexts();
+    } catch (error) {
+      console.error('Failed to switch context:', error);
+    } finally {
+      setSwitching(false);
+    }
+  };
+
+  const handleExitContext = async () => {
+    setSwitching(true);
+    try {
+      await exitContext();
+      loadSwitchableContexts();
+    } catch (error) {
+      console.error('Failed to exit context:', error);
+    } finally {
+      setSwitching(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
