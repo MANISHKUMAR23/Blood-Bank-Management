@@ -5,7 +5,7 @@ import json
 
 def test_specific_endpoints():
     """Test specific Enhanced Inventory endpoints with admin credentials"""
-    base_url = "https://securehemo.preview.emergentagent.com/api"
+    base_url = "https://docusafe-17.preview.emergentagent.com/api"
     
     # Login
     login_response = requests.post(f"{base_url}/auth/login", json={
