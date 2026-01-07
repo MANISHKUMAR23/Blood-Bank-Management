@@ -29,3 +29,5 @@ from .inter_org_requests import router as inter_org_requests_router
 from .audit_logs import router as audit_logs_router
 from .sessions import router as sessions_router
 from .documents import router as documents_router
+from .compliance import router as compliance_router
+from .training import router as training_router
