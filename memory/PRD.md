@@ -168,4 +168,5 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 
 ## Latest Test Reports
 - `/app/test_reports/iteration_5.json` - Phase B testing (100% pass rate)
-- `/app/tests/test_phase_b_context_switching.py` - 12 automated tests
+- `/app/test_reports/iteration_6.json` - Phase F Document Management (100% pass rate, 13 tests)
+- `/app/tests/test_phase_f_documents.py` - Document management API tests
