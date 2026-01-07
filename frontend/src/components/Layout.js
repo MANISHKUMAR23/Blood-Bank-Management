@@ -85,7 +85,7 @@ export default function Layout() {
   const isGlobalContext = useMemo(() => {
     if (!user) return false;
     // System admin with no org_id and not impersonating = global context
-    if (user.user_type === 'system_admin' && !user.org_id && !isImpersonating()) {
+    if (user.user_type === 'system_admin' && !user.org_id && !isImpersonating) {
       return true;
     }
     return false;
@@ -97,7 +97,7 @@ export default function Layout() {
     
     const userType = user.user_type;
     const userRole = user.role || 'admin';
-    const inOrgContext = !!user.org_id || isImpersonating();
+    const inOrgContext = !!user.org_id || isImpersonating;
     
     let items = [];
     
