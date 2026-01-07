@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import List
 from datetime import datetime, timezone
 
@@ -7,7 +7,8 @@ sys.path.append('..')
 
 from database import db
 from models import User, UserCreate, UserLogin, UserResponse, UserType
-from services import hash_password, verify_password, create_token, get_current_user
+from models.audit import AuditAction, AuditModule
+from services import hash_password, verify_password, create_token, get_current_user, AuditService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
