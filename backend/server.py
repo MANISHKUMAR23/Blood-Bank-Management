@@ -23,7 +23,8 @@ from routers import (
     relationships_router, donors_enhanced_router,
     configuration_router, logistics_enhanced_router,
     organizations_router, inter_org_requests_router,
-    audit_logs_router, sessions_router, documents_router
+    audit_logs_router, sessions_router, documents_router,
+    compliance_router, training_router
 )
 
 # Configure logging
