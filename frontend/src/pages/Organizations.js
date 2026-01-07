@@ -252,10 +252,14 @@ export default function Organizations() {
     setShowDetailsDialog(true);
     
     try {
-      const res = await organizationAPI.getInventorySummary(org.id, org.is_parent);
-      setInventorySummary(res.data);
+      const [invRes, usersRes] = await Promise.all([
+        organizationAPI.getInventorySummary(org.id, org.is_parent),
+        organizationAPI.getUsers(org.id, org.is_parent).catch(() => ({ data: [] }))
+      ]);
+      setInventorySummary(invRes.data);
+      setOrgUsers(usersRes.data || []);
     } catch (error) {
-      console.error('Failed to fetch inventory summary:', error);
+      console.error('Failed to fetch details:', error);
     }
   };
 
