@@ -634,12 +634,14 @@ export default function OrganizationDetail() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">Users ({users.length})</TabsTrigger>
           <TabsTrigger value="inventory">Inventory</TabsTrigger>
           {organization.is_parent && <TabsTrigger value="branches">Branches ({branches.length})</TabsTrigger>}
           <TabsTrigger value="documents">Documents ({documents.length})</TabsTrigger>
+          <TabsTrigger value="compliance">Compliance</TabsTrigger>
+          <TabsTrigger value="training">Training</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
