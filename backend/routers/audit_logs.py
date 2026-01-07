@@ -382,9 +382,9 @@ async def get_security_events(
         .to_list(200)
     
     # Group by type
-    failed_logins = [l for l in logs if l.get("action") == "login_failed"]
-    locked_accounts = [l for l in logs if l.get("action") == "account_locked"]
-    permission_denied = [l for l in logs if l.get("action") == "permission_denied"]
+    failed_logins = [log for log in logs if log.get("action") == "login_failed"]
+    locked_accounts = [log for log in logs if log.get("action") == "account_locked"]
+    permission_denied = [log for log in logs if log.get("action") == "permission_denied"]
     
     return {
         "total_events": len(logs),
