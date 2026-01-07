@@ -77,8 +77,7 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 ## Prioritized Backlog
 
 ### P0 (Critical - Next)
-- [ ] Apply RLS to remaining routers: `components.py`, `laboratory.py`, `disposition.py`, `logistics.py`, `notifications.py`
-- [ ] Complete Phase C: Org & User Management workflows
+- [ ] **Phase C: Org & User Management workflows** - Streamlined creation of Orgs + Super Admins, Branches + Tenant Admins
 
 ### P1 (High Priority)
 - [ ] Phase D: Interactive Master & System Admin Dashboards
