@@ -122,6 +122,35 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 - [x] File validation: extensions (.pdf, .doc, .docx, .xls, .xlsx, etc.), max 10MB
 - [x] RLS enforced via OrgAccessHelper middleware
 
+### Phase G: Compliance & Training Modules (COMPLETE - Jan 7, 2026)
+- [x] **Compliance Backend API** (`/app/backend/routers/compliance.py`):
+  - [x] `GET /api/compliance/requirements` - List all compliance requirements
+  - [x] `POST /api/compliance/requirements` - Create requirement (system admin)
+  - [x] `POST /api/compliance/seed-defaults` - Seed 6 default requirements
+  - [x] `GET /api/compliance/organizations/{org_id}` - Get org compliance status
+  - [x] `POST /api/compliance/organizations/{org_id}` - Update org compliance
+  - [x] `POST /api/compliance/organizations/{org_id}/link-document` - Link document to compliance
+  - [x] `GET /api/compliance/organizations/{org_id}/summary` - Compliance statistics
+- [x] **Training Backend API** (`/app/backend/routers/training.py`):
+  - [x] `GET /api/training/courses` - List all training courses
+  - [x] `POST /api/training/courses` - Create course (system admin)
+  - [x] `POST /api/training/seed-defaults` - Seed 8 default courses
+  - [x] `GET /api/training/organizations/{org_id}/records` - Get training records
+  - [x] `POST /api/training/organizations/{org_id}/assign` - Assign training to staff
+  - [x] `PUT /api/training/records/{id}/start` - Start training
+  - [x] `PUT /api/training/records/{id}/complete` - Complete training with score
+  - [x] `GET /api/training/organizations/{org_id}/summary` - Training statistics
+- [x] **Frontend Compliance Tab** in OrganizationDetail:
+  - [x] Stats cards (Requirements, Compliant, Pending, Expiring Soon, Compliance Rate)
+  - [x] Requirements table with status, expiry, document linking
+  - [x] Mark compliant and link document actions
+- [x] **Frontend Training Tab** in OrganizationDetail:
+  - [x] Stats cards (Assignments, Completed, In Progress, Not Started, Completion Rate)
+  - [x] Training records table with staff, course, status, progress
+  - [x] Assign Training dialog with user/course selection
+  - [x] Start and Complete training actions
+- [x] Pre-seeded data: 6 compliance requirements, 8 training courses
+
 ---
 
 ## Prioritized Backlog
@@ -130,7 +159,7 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 - All P0 tasks complete!
 
 ### P1 (High Priority)
-- [ ] Phase G: Compliance & Training Modules
+- All P1 tasks complete!
 
 ### P2 (Medium Priority)
 - [ ] Phase H: Full Security Suite (MFA, Password Policy, API Keys, Backups)
