@@ -903,6 +903,267 @@ export default function Organizations() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create Organization with Admin Dialog */}
+      <Dialog open={showCreateWithAdminDialog} onOpenChange={setShowCreateWithAdminDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5" />
+              {parentOrgForBranch ? 'Create Branch with Tenant Admin' : 'Create Organization with Super Admin'}
+            </DialogTitle>
+            <DialogDescription>
+              {parentOrgForBranch 
+                ? `Create a new branch under "${parentOrgForBranch.org_name}" with its Tenant Admin`
+                : 'Create a new parent organization with its Super Admin in one step'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Organization Section */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-sm text-slate-500 uppercase tracking-wide flex items-center gap-2">
+                <Building className="w-4 h-4" />
+                {parentOrgForBranch ? 'Branch' : 'Organization'} Details
+              </h4>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <Label>{parentOrgForBranch ? 'Branch' : 'Organization'} Name *</Label>
+                  <Input
+                    value={orgWithAdminData.org_name}
+                    onChange={(e) => setOrgWithAdminData({ ...orgWithAdminData, org_name: e.target.value })}
+                    placeholder={parentOrgForBranch ? "e.g., Downtown Branch" : "e.g., City Blood Bank Network"}
+                    data-testid="org-name-input"
+                  />
+                </div>
+                
+                {!parentOrgForBranch && (
+                  <div>
+                    <Label>Organization Type</Label>
+                    <Select
+                      value={orgWithAdminData.org_type}
+                      onValueChange={(value) => setOrgWithAdminData({ ...orgWithAdminData, org_type: value })}
+                    >
+                      <SelectTrigger data-testid="org-type-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="hospital_network">Hospital Network</SelectItem>
+                        <SelectItem value="blood_bank_chain">Blood Bank Chain</SelectItem>
+                        <SelectItem value="standalone">Standalone</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                
+                <div>
+                  <Label>License Number</Label>
+                  <Input
+                    value={orgWithAdminData.license_number}
+                    onChange={(e) => setOrgWithAdminData({ ...orgWithAdminData, license_number: e.target.value })}
+                    placeholder="LIC-XXX"
+                  />
+                </div>
+                
+                <div>
+                  <Label>City</Label>
+                  <Input
+                    value={orgWithAdminData.city}
+                    onChange={(e) => setOrgWithAdminData({ ...orgWithAdminData, city: e.target.value })}
+                  />
+                </div>
+                
+                <div>
+                  <Label>State</Label>
+                  <Input
+                    value={orgWithAdminData.state}
+                    onChange={(e) => setOrgWithAdminData({ ...orgWithAdminData, state: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Admin Section */}
+            <div className="space-y-4 pt-4 border-t">
+              <h4 className="font-medium text-sm text-slate-500 uppercase tracking-wide flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                {parentOrgForBranch ? 'Tenant Admin' : 'Super Admin'} Details
+              </h4>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <Label>Admin Full Name *</Label>
+                  <Input
+                    value={orgWithAdminData.admin_full_name}
+                    onChange={(e) => setOrgWithAdminData({ ...orgWithAdminData, admin_full_name: e.target.value })}
+                    placeholder="John Smith"
+                    data-testid="admin-name-input"
+                  />
+                </div>
+                
+                <div>
+                  <Label>Admin Email *</Label>
+                  <Input
+                    type="email"
+                    value={orgWithAdminData.admin_email}
+                    onChange={(e) => setOrgWithAdminData({ ...orgWithAdminData, admin_email: e.target.value })}
+                    placeholder="admin@example.com"
+                    data-testid="admin-email-input"
+                  />
+                </div>
+                
+                <div>
+                  <Label>Admin Password *</Label>
+                  <Input
+                    type="password"
+                    value={orgWithAdminData.admin_password}
+                    onChange={(e) => setOrgWithAdminData({ ...orgWithAdminData, admin_password: e.target.value })}
+                    placeholder="••••••••"
+                    data-testid="admin-password-input"
+                  />
+                </div>
+                
+                <div>
+                  <Label>Admin Phone</Label>
+                  <Input
+                    value={orgWithAdminData.admin_phone}
+                    onChange={(e) => setOrgWithAdminData({ ...orgWithAdminData, admin_phone: e.target.value })}
+                    placeholder="+1 234 567 8900"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowCreateWithAdminDialog(false);
+              setParentOrgForBranch(null);
+            }}>
+              Cancel
+            </Button>
+            <Button 
+              className="bg-teal-600 hover:bg-teal-700"
+              onClick={parentOrgForBranch ? handleCreateBranchWithAdmin : handleCreateOrgWithAdmin}
+              data-testid="create-org-submit"
+            >
+              Create {parentOrgForBranch ? 'Branch' : 'Organization'} + Admin
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add User Dialog */}
+      <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              Add User to {selectedOrg?.org_name}
+            </DialogTitle>
+            <DialogDescription>
+              Create a new user account for this organization
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label>Full Name *</Label>
+                <Input
+                  value={userFormData.full_name}
+                  onChange={(e) => setUserFormData({ ...userFormData, full_name: e.target.value })}
+                  placeholder="John Doe"
+                  data-testid="user-name-input"
+                />
+              </div>
+              
+              <div>
+                <Label>Email *</Label>
+                <Input
+                  type="email"
+                  value={userFormData.email}
+                  onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
+                  placeholder="user@example.com"
+                  data-testid="user-email-input"
+                />
+              </div>
+              
+              <div>
+                <Label>Password *</Label>
+                <Input
+                  type="password"
+                  value={userFormData.password}
+                  onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+                  placeholder="••••••••"
+                  data-testid="user-password-input"
+                />
+              </div>
+              
+              <div>
+                <Label>Phone</Label>
+                <Input
+                  value={userFormData.phone}
+                  onChange={(e) => setUserFormData({ ...userFormData, phone: e.target.value })}
+                />
+              </div>
+              
+              <div>
+                <Label>Role</Label>
+                <Select
+                  value={userFormData.role}
+                  onValueChange={(value) => setUserFormData({ ...userFormData, role: value })}
+                >
+                  <SelectTrigger data-testid="user-role-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {USER_ROLES.map(role => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {(isSystemAdmin() || isSuperAdmin()) && (
+                <div>
+                  <Label>User Type</Label>
+                  <Select
+                    value={userFormData.user_type}
+                    onValueChange={(value) => setUserFormData({ ...userFormData, user_type: value })}
+                  >
+                    <SelectTrigger data-testid="user-type-select">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="staff">Staff</SelectItem>
+                      {(isSystemAdmin() || isSuperAdmin()) && (
+                        <SelectItem value="tenant_admin">Tenant Admin</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddUserDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              className="bg-teal-600 hover:bg-teal-700"
+              onClick={handleAddUser}
+              data-testid="add-user-submit"
+            >
+              Add User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
