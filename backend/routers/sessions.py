@@ -344,7 +344,9 @@ async def exit_context(
         current_user["id"],
         current_user["role"],
         org_id=actual_org_id,
-        user_type=actual_user_type
+        user_type=actual_user_type,
+        is_impersonating=False,
+        actual_user_type=actual_user_type
     )
     
     # Audit log
