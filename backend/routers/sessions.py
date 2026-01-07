@@ -287,12 +287,14 @@ async def switch_context(
     else:
         target_user_type = "tenant_admin"
     
-    # Create new token with context
+    # Create new token with context and impersonation flag
     new_token = create_token(
         current_user["id"],
         current_user["role"],
         org_id=switch_request.target_org_id,
-        user_type=target_user_type
+        user_type=target_user_type,
+        is_impersonating=True,
+        actual_user_type=user_type
     )
     
     # Audit log
