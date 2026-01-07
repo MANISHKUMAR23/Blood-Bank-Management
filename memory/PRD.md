@@ -72,6 +72,15 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 - [x] `logistics.py` - Uses ReadAccess/WriteAccess middleware
 - [x] `dashboard.py` - Uses ReadAccess middleware
 
+### Phase C: Org & User Management (COMPLETE - Jan 7, 2026)
+- [x] Combined creation endpoint: `POST /organizations/with-admin` - Creates org + super_admin
+- [x] Combined creation endpoint: `POST /organizations/{id}/branches/with-admin` - Creates branch + tenant_admin
+- [x] User management: `GET/POST/PUT/DELETE /organizations/{id}/users`
+- [x] Frontend: "Add Organization + Admin" dialog with org details + admin details
+- [x] Frontend: "Add Branch with Admin" button on parent orgs
+- [x] Frontend: "Add User" button on each organization
+- [x] Frontend: Users list in organization details dialog
+
 ---
 
 ## Prioritized Backlog
