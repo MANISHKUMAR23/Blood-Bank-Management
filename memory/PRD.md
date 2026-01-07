@@ -155,6 +155,7 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 - `/app/backend/middleware/org_access.py` - RLS middleware
 - `/app/backend/services/audit_service.py` - Audit logging service
 - `/app/backend/routers/sessions.py` - Context switching API
+- `/app/backend/routers/documents.py` - Document management API
 - `/app/backend/services/helpers.py` - JWT token creation with impersonation
 
 ### Frontend
