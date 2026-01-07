@@ -35,3 +35,7 @@ from .organization import (
     ExternalOrganization, ExternalOrganizationCreate,
     InterOrgRequest, InterOrgRequestCreate
 )
+from .audit import (
+    AuditLog, AuditLogCreate, AuditLogFilter, AuditLogResponse,
+    AuditAction, AuditModule
+)
