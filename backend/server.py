@@ -92,6 +92,8 @@ app.include_router(inter_org_requests_router, prefix="/api")
 app.include_router(audit_logs_router, prefix="/api")
 app.include_router(sessions_router, prefix="/api")
 app.include_router(documents_router, prefix="/api")
+app.include_router(compliance_router, prefix="/api")
+app.include_router(training_router, prefix="/api")
 
 
 async def create_default_admin():
