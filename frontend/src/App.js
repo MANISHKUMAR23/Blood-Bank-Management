@@ -167,6 +167,13 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         
+        {/* Audit Logs */}
+        <Route path="audit-logs" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AuditLogs />
+          </ProtectedRoute>
+        } />
+        
         {/* Admin */}
         <Route path="users" element={
           <ProtectedRoute allowedRoles={['admin']}>
