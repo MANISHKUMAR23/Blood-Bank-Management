@@ -39,3 +39,8 @@ from .audit import (
     AuditLog, AuditLogCreate, AuditLogFilter, AuditLogResponse,
     AuditAction, AuditModule
 )
+from .session import (
+    UserSession, SessionCreate, SessionResponse, ContextSwitchRequest,
+    ContextType, SecurityEvent,
+    MAX_CONCURRENT_SESSIONS, SESSION_TIMEOUT_MINUTES
+)
