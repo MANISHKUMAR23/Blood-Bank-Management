@@ -10,12 +10,20 @@ from models import Donation, DonationCreate, BloodUnit, UnitStatus
 from services import (
     get_current_user, generate_donation_id, generate_unit_id, generate_barcode_base64
 )
+from middleware import ReadAccess, WriteAccess, OrgAccessHelper
 
 router = APIRouter(prefix="/donations", tags=["Donations"])
 
 @router.post("")
-async def create_donation(donation_data: DonationCreate, current_user: dict = Depends(get_current_user)):
-    screening = await db.screenings.find_one({"id": donation_data.screening_id}, {"_id": 0})
+async def create_donation(
+    donation_data: DonationCreate, 
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(WriteAccess)
+):
+    screening = await db.screenings.find_one(
+        access.filter({"id": donation_data.screening_id}), 
+        {"_id": 0}
+    )
     if not screening:
         raise HTTPException(status_code=404, detail="Screening not found")
     if screening["eligibility_status"] != "eligible":
@@ -24,6 +32,7 @@ async def create_donation(donation_data: DonationCreate, current_user: dict = De
     donation = Donation(**donation_data.model_dump())
     donation.donation_id = await generate_donation_id()
     donation.phlebotomist_id = current_user["id"]
+    donation.org_id = screening.get("org_id") or access.get_default_org_id()
     
     doc = donation.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
