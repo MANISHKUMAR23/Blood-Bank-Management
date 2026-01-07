@@ -46,10 +46,11 @@ async def complete_donation(
     volume: float,
     adverse_reaction: bool = False,
     adverse_reaction_details: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    access: OrgAccessHelper = Depends(WriteAccess)
 ):
     donation = await db.donations.find_one(
-        {"$or": [{"id": donation_id}, {"donation_id": donation_id}]},
+        access.filter({"$or": [{"id": donation_id}, {"donation_id": donation_id}]}),
         {"_id": 0}
     )
     if not donation:
