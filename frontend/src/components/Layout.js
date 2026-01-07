@@ -187,6 +187,29 @@ export default function Layout() {
 
       {/* Main Content */}
       <div className={`lg:ml-64 min-h-screen transition-all duration-200`}>
+        {/* Impersonation Banner */}
+        {isImpersonating && (
+          <div className="bg-amber-500 text-amber-950 px-4 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <RefreshCw className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                Acting as {contextInfo?.org_info?.org_name || 'another organization'} ({user?.user_type?.replace('_', ' ')})
+              </span>
+            </div>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-600 h-7"
+              onClick={handleExitContext}
+              disabled={switching}
+              data-testid="exit-context-btn"
+            >
+              <ArrowLeft className="w-3 h-3 mr-1" />
+              Exit Context
+            </Button>
+          </div>
+        )}
+
         {/* Header */}
         <header className="h-16 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40">
           <div className="h-full px-4 flex items-center justify-between">
@@ -198,14 +221,64 @@ export default function Layout() {
               >
                 <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
               </button>
-              <div className="hidden sm:block">
+              <div className="hidden sm:flex items-center gap-3">
                 <span className="text-[11px] uppercase tracking-wider font-bold text-slate-400">
                   Blood Bank Management System
                 </span>
+                {user?.org_name && (
+                  <Badge variant="outline" className="text-xs bg-slate-100 text-slate-600">
+                    {user.org_name}
+                  </Badge>
+                )}
               </div>
             </div>
 
             <div className="flex items-center gap-4">
+              {/* Context Switcher */}
+              {canSwitchContext() && switchableContexts.length > 0 && !isImpersonating && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="gap-2 text-slate-600"
+                      disabled={switching}
+                      data-testid="context-switcher"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${switching ? 'animate-spin' : ''}`} />
+                      <span className="hidden sm:inline">Switch Context</span>
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-72">
+                    <DropdownMenuLabel>Switch Organization Context</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {loadingContexts ? (
+                      <DropdownMenuItem disabled>Loading...</DropdownMenuItem>
+                    ) : (
+                      switchableContexts.map((ctx) => (
+                        <DropdownMenuItem 
+                          key={ctx.org_id}
+                          onClick={() => handleSwitchContext(ctx.org_id, ctx.switch_as)}
+                          className="flex items-center justify-between"
+                          data-testid={`switch-to-${ctx.org_id}`}
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium">{ctx.org_name}</span>
+                            <span className="text-xs text-slate-500">
+                              {ctx.org_type} • Act as {ctx.switch_as?.replace('_', ' ')}
+                            </span>
+                          </div>
+                          {ctx.is_parent && (
+                            <Badge variant="secondary" className="text-xs">Parent</Badge>
+                          )}
+                        </DropdownMenuItem>
+                      ))
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
               <NotificationBell />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -217,7 +290,7 @@ export default function Layout() {
                     </Avatar>
                     <div className="hidden md:block text-left">
                       <p className="text-sm font-medium text-slate-900 dark:text-white">{user?.full_name}</p>
-                      <p className="text-xs text-slate-500">{roleLabels[user?.role]}</p>
+                      <p className="text-xs text-slate-500">{user?.user_type?.replace('_', ' ') || roleLabels[user?.role]}</p>
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
@@ -230,6 +303,15 @@ export default function Layout() {
                   <DropdownMenuItem className="text-slate-600">
                     <span>Role: {roleLabels[user?.role]}</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem className="text-slate-600">
+                    <span>Type: {user?.user_type?.replace('_', ' ')}</span>
+                  </DropdownMenuItem>
+                  {user?.org_name && (
+                    <DropdownMenuItem className="text-slate-600">
+                      <Building2 className="w-4 h-4 mr-2" />
+                      <span>{user.org_name}</span>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-red-600" data-testid="logout-btn">
                     <LogOut className="w-4 h-4 mr-2" />
