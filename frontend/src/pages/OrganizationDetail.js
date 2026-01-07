@@ -127,6 +127,7 @@ export default function OrganizationDetail() {
       fetchUsers();
       fetchInventory();
       fetchAuditLogs();
+      fetchDocuments();
       if (organization.is_parent) {
         fetchBranches();
       }
