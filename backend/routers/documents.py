@@ -84,7 +84,7 @@ async def upload_document(
     """Upload a document for an organization"""
     
     # Verify org access
-    if org_id not in access.writable_org_ids:
+    if org_id not in access.org_ids:
         raise HTTPException(status_code=403, detail="No write access to this organization")
     
     # Validate file extension
@@ -172,7 +172,7 @@ async def get_organization_documents(
 ):
     """Get all documents for an organization"""
     
-    if org_id not in access.accessible_org_ids:
+    if org_id not in access.org_ids:
         raise HTTPException(status_code=403, detail="No access to this organization")
     
     query = {"org_id": org_id}
@@ -203,7 +203,7 @@ async def get_document(
 ):
     """Get a specific document's metadata"""
     
-    if org_id not in access.accessible_org_ids:
+    if org_id not in access.org_ids:
         raise HTTPException(status_code=403, detail="No access to this organization")
     
     doc = await db.documents.find_one({"id": doc_id, "org_id": org_id}, {"_id": 0, "file_path": 0})
@@ -225,7 +225,7 @@ async def download_document(
 ):
     """Download a document file"""
     
-    if org_id not in access.accessible_org_ids:
+    if org_id not in access.org_ids:
         raise HTTPException(status_code=403, detail="No access to this organization")
     
     doc = await db.documents.find_one({"id": doc_id, "org_id": org_id})
@@ -339,7 +339,7 @@ async def get_document_stats(
 ):
     """Get document statistics for an organization"""
     
-    if org_id not in access.accessible_org_ids:
+    if org_id not in access.org_ids:
         raise HTTPException(status_code=403, detail="No access to this organization")
     
     docs = await db.documents.find({"org_id": org_id}, {"_id": 0}).to_list(500)
