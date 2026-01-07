@@ -13,7 +13,7 @@ from services import hash_password, verify_password, create_token, get_current_u
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/register", response_model=UserResponse)
-async def register(user_data: UserCreate, current_user: dict = Depends(get_current_user)):
+async def register(user_data: UserCreate, request: Request, current_user: dict = Depends(get_current_user)):
     """
     Register a new staff user.
     - System Admin: Can create any user type in any org
@@ -77,6 +77,19 @@ async def register(user_data: UserCreate, current_user: dict = Depends(get_curre
     doc['updated_at'] = doc['updated_at'].isoformat()
     
     await db.users.insert_one(doc)
+    
+    # Audit log - user created
+    await AuditService.log(
+        action=AuditAction.CREATE,
+        module=AuditModule.USERS,
+        user=current_user,
+        record_id=user.id,
+        record_type="user",
+        description=f"Created user {user.email} ({new_user_type.value})",
+        new_values={"email": user.email, "full_name": user.full_name, "role": user.role.value, "user_type": new_user_type.value},
+        request=request,
+        org_id=target_org_id
+    )
     
     # Get org name for response
     org_name = None
