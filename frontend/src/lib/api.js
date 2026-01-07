@@ -72,6 +72,20 @@ export const organizationAPI = {
   getExternalOrgHistory: (id) => api.get(`/organizations/external/${id}/history`),
 };
 
+// Document APIs
+export const documentAPI = {
+  getAll: (orgId, params) => api.get(`/documents/${orgId}`, { params }),
+  getOne: (orgId, docId) => api.get(`/documents/${orgId}/${docId}`),
+  upload: (orgId, formData) => api.post(`/documents/${orgId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  update: (orgId, docId, data) => api.put(`/documents/${orgId}/${docId}`, data),
+  verify: (orgId, docId) => api.put(`/documents/${orgId}/${docId}/verify`),
+  delete: (orgId, docId) => api.delete(`/documents/${orgId}/${docId}`),
+  getStats: (orgId) => api.get(`/documents/${orgId}/summary/stats`),
+  getDownloadUrl: (orgId, docId) => `${API_URL}/documents/${orgId}/${docId}/download`,
+};
+
 // Public Donor APIs (no auth required)
 export const publicDonorAPI = {
   register: (data) => api.post('/public/donor-register', data),
