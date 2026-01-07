@@ -153,6 +153,11 @@ function AppRoutes() {
             <Organizations />
           </ProtectedRoute>
         } />
+        <Route path="organizations/:orgId" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <OrganizationDetail />
+          </ProtectedRoute>
+        } />
         
         {/* Blood Requests (Inter-Org) */}
         <Route path="blood-requests" element={
