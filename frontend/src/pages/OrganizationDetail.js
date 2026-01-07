@@ -1244,6 +1244,161 @@ export default function OrganizationDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Upload Document Dialog */}
+      <Dialog open={showUploadDocDialog} onOpenChange={setShowUploadDocDialog}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Upload Document</DialogTitle>
+            <DialogDescription>Add a new document to this organization</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label>Document Title *</Label>
+                <Input
+                  value={docFormData.title}
+                  onChange={(e) => setDocFormData({ ...docFormData, title: e.target.value })}
+                  placeholder="e.g., Blood Bank License 2024"
+                  data-testid="doc-title-input"
+                />
+              </div>
+              
+              <div className="col-span-2">
+                <Label>File *</Label>
+                <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                  {docFormData.file ? (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <File className="w-5 h-5 text-teal-600" />
+                        <span className="text-sm font-medium">{docFormData.file.name}</span>
+                        <span className="text-xs text-slate-400">
+                          ({formatFileSize(docFormData.file.size)})
+                        </span>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setDocFormData({ ...docFormData, file: null })}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer">
+                      <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                      <p className="text-sm text-slate-500">Click to select a file</p>
+                      <p className="text-xs text-slate-400 mt-1">PDF, DOC, XLS, Images (max 10MB)</p>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.txt,.csv,.zip"
+                        onChange={(e) => setDocFormData({ ...docFormData, file: e.target.files?.[0] || null })}
+                        data-testid="doc-file-input"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <Label>Document Type</Label>
+                <Select
+                  value={docFormData.doc_type}
+                  onValueChange={(value) => setDocFormData({ ...docFormData, doc_type: value })}
+                >
+                  <SelectTrigger data-testid="doc-type-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DOCUMENT_TYPES.map(type => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>Issuing Authority</Label>
+                <Input
+                  value={docFormData.issuing_authority}
+                  onChange={(e) => setDocFormData({ ...docFormData, issuing_authority: e.target.value })}
+                  placeholder="e.g., State Health Dept"
+                />
+              </div>
+              
+              <div>
+                <Label>Issue Date</Label>
+                <Input
+                  type="date"
+                  value={docFormData.issue_date}
+                  onChange={(e) => setDocFormData({ ...docFormData, issue_date: e.target.value })}
+                />
+              </div>
+              
+              <div>
+                <Label>Expiry Date</Label>
+                <Input
+                  type="date"
+                  value={docFormData.expiry_date}
+                  onChange={(e) => setDocFormData({ ...docFormData, expiry_date: e.target.value })}
+                />
+              </div>
+              
+              <div>
+                <Label>Reference Number</Label>
+                <Input
+                  value={docFormData.reference_number}
+                  onChange={(e) => setDocFormData({ ...docFormData, reference_number: e.target.value })}
+                  placeholder="e.g., LIC-2024-001"
+                />
+              </div>
+              
+              <div>
+                <Label>Tags (comma separated)</Label>
+                <Input
+                  value={docFormData.tags}
+                  onChange={(e) => setDocFormData({ ...docFormData, tags: e.target.value })}
+                  placeholder="e.g., license, compliance"
+                />
+              </div>
+              
+              <div className="col-span-2">
+                <Label>Description</Label>
+                <Textarea
+                  value={docFormData.description}
+                  onChange={(e) => setDocFormData({ ...docFormData, description: e.target.value })}
+                  placeholder="Optional description..."
+                  rows={2}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowUploadDocDialog(false)}>Cancel</Button>
+            <Button 
+              className="bg-teal-600 hover:bg-teal-700" 
+              onClick={handleUploadDocument}
+              disabled={uploadingDoc || !docFormData.file || !docFormData.title}
+              data-testid="doc-upload-submit"
+            >
+              {uploadingDoc ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-1" />
+                  Upload
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
