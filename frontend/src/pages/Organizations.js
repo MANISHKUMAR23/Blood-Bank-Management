@@ -410,7 +410,13 @@ export default function Organizations() {
           </div>
           
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => viewDetails(org)} data-testid={`view-org-${org.id}`}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate(`/organizations/${org.id}`)} 
+              data-testid={`view-org-${org.id}`}
+              title="View Details"
+            >
               <Eye className="w-4 h-4" />
             </Button>
             {(isSystemAdmin() || (isSuperAdmin() && org.id === user?.org_id)) && (
