@@ -55,6 +55,8 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 - [x] Frontend context switching UI in Layout.js
 - [x] Impersonation banner with "Exit Context" button
 - [x] AuthContext.js with switchContext and exitContext functions
+- [x] **RLS respects impersonation context** - When switched, user only sees target org's data
+- [x] Dashboard refreshes on context switch to show filtered data
 
 ### Row-Level Security (RLS) Implementation (PARTIAL)
 - [x] `donors.py` - Uses ReadAccess/WriteAccess middleware
