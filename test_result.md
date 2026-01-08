@@ -470,3 +470,27 @@ frontend:
       - working: "pending"
         agent: "main"
         comment: "Complete page redesign with: 1) Tabs for Admin Users and Staff Users, 2) Admin breakdown cards (System/Super/Tenant admins), 3) Staff role breakdown cards (8 roles), 4) Filters (Type/Role, Organization, Status, Search), 5) Add Admin/Staff buttons, 6) Tables with Name, Email, Type/Role, Organization, Status, Last Login, Actions columns, 7) Add/Edit User dialog with all fields."
+
+  - task: "Donor Management - Org/Branch Filters and Column"
+    implemented: true
+    working: "pending"
+    file: "/app/frontend/src/pages/DonorManagement.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "pending"
+        agent: "main"
+        comment: "Added Organization column to donors table, Organization filter dropdown (for system admins), Branch filter dropdown (appears when org is selected). Uses org data from backend which already includes org_id."
+
+  - task: "Inventory - Interactive Blood Group Cards with Detail Modal"
+    implemented: true
+    working: "pending"
+    file: "/app/frontend/src/pages/InventoryEnhanced.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "pending"
+        agent: "main"
+        comment: "Enhanced BloodGroupView component with: 1) Interactive card grid with gradient-colored blood group circles, 2) Click to open detail modal, 3) 4-tab modal (Components, Expiry, Storage, Branch), 4) Multi-select checkboxes in tables, 5) Component breakdown by type in modal."
