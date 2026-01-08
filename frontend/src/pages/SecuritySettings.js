@@ -893,6 +893,17 @@ export default function SecuritySettings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Sensitive Action Verification Modal */}
+      <SensitiveActionModal
+        open={showSensitiveModal}
+        onOpenChange={setShowSensitiveModal}
+        actionType={sensitiveAction}
+        actionTitle="Update Security Settings"
+        actionDescription="You are about to modify security settings. This change will affect all users in your organization."
+        onVerified={handleSensitiveActionVerified}
+        onCancel={() => setSensitiveAction(null)}
+      />
     </div>
   );
 }
