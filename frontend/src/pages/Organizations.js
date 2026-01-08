@@ -169,15 +169,27 @@ export default function Organizations() {
   };
 
   const handleDeactivate = async (org) => {
-    if (!window.confirm(`Are you sure you want to deactivate "${org.org_name}"?`)) return;
+    // Use sensitive action modal for verification
+    setPendingDeactivateOrg(org);
+    setShowSensitiveModal(true);
+  };
+
+  const executeDeactivateOrg = async () => {
+    if (!pendingDeactivateOrg) return;
     
     try {
-      await organizationAPI.deactivate(org.id);
+      await organizationAPI.deactivate(pendingDeactivateOrg.id);
       toast.success('Organization deactivated');
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to deactivate organization');
+    } finally {
+      setPendingDeactivateOrg(null);
     }
+  };
+
+  const handleSensitiveActionVerified = async (verificationToken) => {
+    await executeDeactivateOrg();
   };
 
   // Create organization with admin (System Admin only)
