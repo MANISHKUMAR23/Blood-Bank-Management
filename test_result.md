@@ -521,3 +521,20 @@ frontend:
       - working: "pending"
         agent: "main"
         comment: "Enhanced BloodGroupView component with: 1) Interactive card grid with gradient-colored blood group circles, 2) Click to open detail modal, 3) 4-tab modal (Components, Expiry, Storage, Branch), 4) Multi-select checkboxes in tables, 5) Component breakdown by type in modal."
+
+  - task: "Sensitive Action Re-authentication for Admin Operations"
+    implemented: true
+    working: "pending"
+    files:
+      - "/app/backend/routers/sensitive_actions.py"
+      - "/app/frontend/src/components/SensitiveActionModal.js"
+      - "/app/frontend/src/pages/UserManagement.js"
+      - "/app/frontend/src/pages/Organizations.js"
+      - "/app/frontend/src/pages/SecuritySettings.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: "pending"
+        agent: "main"
+        comment: "Implemented re-authentication for sensitive admin actions. Supports: 1) Password verification, 2) Email OTP verification. Applied to: Delete/Toggle admin users, Deactivate organizations/branches, Update security/password policy settings. Backend stores verification tokens with 5-min expiry."
