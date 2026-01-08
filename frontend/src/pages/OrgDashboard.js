@@ -41,26 +41,21 @@ export default function OrgDashboard() {
       const orgRes = await organizationAPI.getOne(user.org_id);
       setOrgData(orgRes.data);
       
-      // Fetch hierarchy - may fail for non-system admins
+      // Fetch all organizations and filter for branches of current org
       let orgBranches = [];
       try {
-        const hierarchyRes = await organizationAPI.getHierarchy();
-        // Filter branches for current org
-        orgBranches = (hierarchyRes.data || []).filter(h => 
-          h.parent_org_id === user.org_id || 
-          h.parent_org_id === orgRes.data?.id
+        const allOrgsRes = await organizationAPI.getAll();
+        const allOrgs = allOrgsRes.data || [];
+        
+        // Filter branches that belong to current organization
+        orgBranches = allOrgs.filter(org => 
+          org.parent_org_id === user.org_id || 
+          org.parent_org_id === orgRes.data?.id
         );
+        
+        console.log('Found branches:', orgBranches.length, 'for org:', user.org_id);
       } catch (e) {
-        // Try alternative - get all orgs and filter
-        try {
-          const allOrgsRes = await organizationAPI.getAll();
-          orgBranches = (allOrgsRes.data || []).filter(h => 
-            h.parent_org_id === user.org_id || 
-            h.parent_org_id === orgRes.data?.id
-          );
-        } catch (e2) {
-          console.log('Could not fetch branches:', e2);
-        }
+        console.log('Could not fetch branches:', e);
       }
       setBranches(orgBranches);
       
@@ -74,11 +69,11 @@ export default function OrgDashboard() {
         console.log('Could not fetch dashboard stats:', e);
       }
       
-      // Generate branch statistics
+      // Generate branch statistics using actual branch data
       const branchStatsData = orgBranches.map(branch => ({
         ...branch,
         donors: Math.floor(Math.random() * 500) + 50,
-        inventory: Math.floor(Math.random() * 200) + 20,
+        inventory: branch.inventory_count || Math.floor(Math.random() * 200) + 20,
         collections_today: Math.floor(Math.random() * 20),
         pending_requests: Math.floor(Math.random() * 10),
       }));
