@@ -310,6 +310,36 @@ export default function DonorManagement() {
               ))}
             </SelectContent>
           </Select>
+
+          {isSystemAdmin && isSystemAdmin() && (
+            <>
+              <Select value={orgFilter} onValueChange={(v) => { setOrgFilter(v); setBranchFilter('all'); }}>
+                <SelectTrigger className="w-[180px]" data-testid="org-filter">
+                  <SelectValue placeholder="Organization" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Organizations</SelectItem>
+                  {parentOrgs.map(org => (
+                    <SelectItem key={org.id} value={org.id}>{org.org_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {branches.length > 0 && (
+                <Select value={branchFilter} onValueChange={setBranchFilter}>
+                  <SelectTrigger className="w-[160px]" data-testid="branch-filter">
+                    <SelectValue placeholder="Branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Branches</SelectItem>
+                    {branches.map(branch => (
+                      <SelectItem key={branch.id} value={branch.id}>{branch.org_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </>
+          )}
           
           <Button onClick={handleSearch} disabled={loading}>
             <Search className="w-4 h-4 mr-2" />
