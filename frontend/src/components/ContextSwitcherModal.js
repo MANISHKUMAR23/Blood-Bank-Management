@@ -268,7 +268,7 @@ export default function ContextSwitcherModal({ open, onOpenChange, onSwitch, cur
 
         {/* Current Context Info */}
         {currentContext && (
-          <div className="pt-3 border-t border-slate-200">
+          <div className="pt-3 border-t border-slate-200 flex-shrink-0">
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <Globe className="w-4 h-4" />
               <span>Current: </span>
