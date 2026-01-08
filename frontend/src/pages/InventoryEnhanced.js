@@ -2287,7 +2287,7 @@ function StatusView({ data, selectedItems, onToggleSelect, onPrintLabel, onViewA
                   {allItems.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8 text-slate-500">
-                        No items with status "{status.display_name}"
+                        No items with status &ldquo;{status.display_name}&rdquo;
                       </TableCell>
                     </TableRow>
                   ) : (
