@@ -32,61 +32,61 @@ export default function OrgDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch organization details
-      if (user?.org_id) {
-        // Fetch org details first
-        const orgRes = await organizationAPI.getById(user.org_id);
-        setOrgData(orgRes.data);
-        
-        // Fetch hierarchy - may fail for non-system admins
-        let orgBranches = [];
+      if (!user?.org_id) {
+        setLoading(false);
+        return;
+      }
+
+      // Fetch org details first
+      const orgRes = await organizationAPI.getById(user.org_id);
+      setOrgData(orgRes.data);
+      
+      // Fetch hierarchy - may fail for non-system admins
+      let orgBranches = [];
+      try {
+        const hierarchyRes = await organizationAPI.getHierarchy();
+        // Filter branches for current org
+        orgBranches = (hierarchyRes.data || []).filter(h => 
+          h.parent_org_id === user.org_id || 
+          h.parent_org_id === orgRes.data?.id
+        );
+      } catch (e) {
+        // Try alternative - get all orgs and filter
         try {
-          const hierarchyRes = await organizationAPI.getHierarchy();
-          // Filter branches for current org
-          orgBranches = (hierarchyRes.data || []).filter(h => 
+          const allOrgsRes = await organizationAPI.getAll();
+          orgBranches = (allOrgsRes.data || []).filter(h => 
             h.parent_org_id === user.org_id || 
             h.parent_org_id === orgRes.data?.id
           );
-        } catch (e) {
-          // Try alternative - get all orgs and filter
-          try {
-            const allOrgsRes = await organizationAPI.getAll();
-            orgBranches = (allOrgsRes.data || []).filter(h => 
-              h.parent_org_id === user.org_id || 
-              h.parent_org_id === orgRes.data?.id
-            );
-          } catch (e2) {
-            console.log('Could not fetch branches:', e2);
-          }
+        } catch (e2) {
+          console.log('Could not fetch branches:', e2);
         }
-        setBranches(orgBranches);
-        
-        // Fetch dashboard stats
-        try {
-          const dashboardRes = await dashboardAPI.getStats();
-          if (dashboardRes.data) {
-            setStats(dashboardRes.data);
-          }
-        } catch (e) {
-          console.log('Could not fetch dashboard stats:', e);
-        }
-        
-        // Generate branch statistics
-        const branchStatsData = orgBranches.map(branch => ({
-          ...branch,
-          donors: Math.floor(Math.random() * 500) + 50,
-          inventory: Math.floor(Math.random() * 200) + 20,
-          collections_today: Math.floor(Math.random() * 20),
-          pending_requests: Math.floor(Math.random() * 10),
-        }));
-        setBranchStats(branchStatsData);
       }
+      setBranches(orgBranches);
+      
+      // Fetch dashboard stats
+      try {
+        const dashboardRes = await dashboardAPI.getStats();
+        if (dashboardRes.data) {
+          setStats(dashboardRes.data);
+        }
+      } catch (e) {
+        console.log('Could not fetch dashboard stats:', e);
+      }
+      
+      // Generate branch statistics
+      const branchStatsData = orgBranches.map(branch => ({
+        ...branch,
+        donors: Math.floor(Math.random() * 500) + 50,
+        inventory: Math.floor(Math.random() * 200) + 20,
+        collections_today: Math.floor(Math.random() * 20),
+        pending_requests: Math.floor(Math.random() * 10),
+      }));
+      setBranchStats(branchStatsData);
+      
     } catch (error) {
       console.error('Failed to fetch org data:', error);
-      // Only show error if we couldn't get basic org data
-      if (!orgData) {
-        toast.error('Failed to load organization data');
-      }
+      toast.error('Failed to load organization data');
     } finally {
       setLoading(false);
     }
