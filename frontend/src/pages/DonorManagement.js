@@ -128,16 +128,37 @@ export default function DonorManagement() {
     }
   };
 
-  // Filter donors by search
-  const filteredDonors = donors.filter(donor => {
-    if (!search) return true;
-    const searchLower = search.toLowerCase();
-    return (
-      donor.full_name?.toLowerCase().includes(searchLower) ||
-      donor.donor_id?.toLowerCase().includes(searchLower) ||
-      donor.phone?.includes(search)
-    );
-  });
+  // Filter donors by search and org/branch
+  const filteredDonors = useMemo(() => {
+    return donors.filter(donor => {
+      // Search filter
+      if (search) {
+        const searchLower = search.toLowerCase();
+        const matchesSearch = (
+          donor.full_name?.toLowerCase().includes(searchLower) ||
+          donor.donor_id?.toLowerCase().includes(searchLower) ||
+          donor.phone?.includes(search)
+        );
+        if (!matchesSearch) return false;
+      }
+      
+      // Org filter
+      if (orgFilter !== 'all') {
+        const donorOrg = organizations.find(o => o.id === donor.org_id);
+        // Check if donor belongs to the selected org or its branches
+        if (donor.org_id !== orgFilter && donorOrg?.parent_org_id !== orgFilter) {
+          return false;
+        }
+      }
+      
+      // Branch filter
+      if (branchFilter !== 'all' && donor.org_id !== branchFilter) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [donors, search, orgFilter, branchFilter, organizations]);
 
   // Count statistics
   const stats = {
