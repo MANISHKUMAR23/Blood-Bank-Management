@@ -247,7 +247,7 @@ export default function Layout() {
 
         {/* Context Indicator */}
         {isGlobalContext && (
-          <div className="mx-4 mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mx-4 mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg flex-shrink-0">
             <div className="flex items-center gap-2 text-blue-700">
               <Globe className="w-4 h-4" />
               <span className="text-xs font-medium">Global Context</span>
@@ -257,7 +257,7 @@ export default function Layout() {
         )}
         
         {isImpersonating && (
-          <div className="mx-4 mt-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="mx-4 mt-3 p-2 bg-amber-50 border border-amber-200 rounded-lg flex-shrink-0">
             <div className="flex items-center gap-2 text-amber-700">
               <Building2 className="w-4 h-4" />
               <span className="text-xs font-medium">{contextInfo?.org_name || 'Organization'}</span>
@@ -266,8 +266,8 @@ export default function Layout() {
           </div>
         )}
 
-        {/* Navigation */}
-        <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-10rem)]">
+        {/* Navigation - Scrollable */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 12rem)' }}>
           {/* Platform Modules */}
           {groupedNavItems.platform.length > 0 && (
             <>
