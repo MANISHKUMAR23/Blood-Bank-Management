@@ -115,6 +115,7 @@ async def get_network_dashboard(
             "org_type": org.get("org_type"),
             "city": org.get("city"),
             "is_parent": org.get("is_parent", False),
+            "parent_org_id": org.get("parent_org_id"),
             "donor_count": donor_count,
             "inventory_count": inventory_count,
             "expiring_count": expiring_count,
