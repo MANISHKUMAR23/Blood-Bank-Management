@@ -372,9 +372,10 @@ export default function DonorManagement() {
                     <TableHead>Name</TableHead>
                     <TableHead>Age</TableHead>
                     <TableHead>Blood Group</TableHead>
+                    <TableHead>Organization</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Total Donations</TableHead>
+                    <TableHead>Donations</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -394,6 +395,18 @@ export default function DonorManagement() {
                         ) : (
                           <span className="text-slate-400">-</span>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 text-sm">
+                          {getOrgType(donor.org_id) === 'branch' ? (
+                            <MapPin className="w-3 h-3 text-slate-400" />
+                          ) : (
+                            <Building2 className="w-3 h-3 text-slate-400" />
+                          )}
+                          <span className="truncate max-w-[120px]" title={getOrgName(donor.org_id)}>
+                            {getOrgName(donor.org_id)}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm">{donor.phone}</TableCell>
                       <TableCell>
