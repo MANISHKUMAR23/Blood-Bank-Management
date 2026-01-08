@@ -402,48 +402,18 @@ export default function Layout() {
 
             <div className="flex items-center gap-4">
               {/* Context Switcher */}
-              {canSwitchContext() && switchableContexts.length > 0 && !isImpersonating && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="gap-2 text-slate-600"
-                      disabled={switching}
-                      data-testid="context-switcher"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${switching ? 'animate-spin' : ''}`} />
-                      <span className="hidden sm:inline">Switch Context</span>
-                      <ChevronDown className="w-3 h-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-72">
-                    <DropdownMenuLabel>Switch Organization Context</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {loadingContexts ? (
-                      <DropdownMenuItem disabled>Loading...</DropdownMenuItem>
-                    ) : (
-                      switchableContexts.map((ctx) => (
-                        <DropdownMenuItem 
-                          key={ctx.org_id}
-                          onClick={() => handleSwitchContext(ctx.org_id, ctx.switch_as)}
-                          className="flex items-center justify-between"
-                          data-testid={`switch-to-${ctx.org_id}`}
-                        >
-                          <div className="flex flex-col">
-                            <span className="font-medium">{ctx.org_name}</span>
-                            <span className="text-xs text-slate-500">
-                              {ctx.org_type} • Act as {ctx.switch_as?.replace('_', ' ')}
-                            </span>
-                          </div>
-                          {ctx.is_parent && (
-                            <Badge variant="secondary" className="text-xs">Parent</Badge>
-                          )}
-                        </DropdownMenuItem>
-                      ))
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              {canSwitchContext() && !isImpersonating && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2 text-slate-600"
+                  onClick={() => setShowContextModal(true)}
+                  disabled={switching}
+                  data-testid="context-switcher"
+                >
+                  <ArrowLeftRight className={`w-4 h-4 ${switching ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Switch Context</span>
+                </Button>
               )}
 
               <NotificationBell />
@@ -495,6 +465,14 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Context Switcher Modal */}
+      <ContextSwitcherModal
+        open={showContextModal}
+        onOpenChange={setShowContextModal}
+        onSwitch={handleSwitchContext}
+        currentContext={contextInfo}
+      />
 
       {/* Mobile Overlay */}
       {sidebarOpen && (
