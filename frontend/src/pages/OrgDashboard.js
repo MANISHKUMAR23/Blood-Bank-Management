@@ -34,23 +34,41 @@ export default function OrgDashboard() {
     try {
       // Fetch organization details
       if (user?.org_id) {
-        const [orgRes, hierarchyRes, dashboardRes] = await Promise.all([
-          organizationAPI.getById(user.org_id),
-          organizationAPI.getHierarchy(),
-          dashboardAPI.getStats().catch(() => ({ data: null }))
-        ]);
-        
+        // Fetch org details first
+        const orgRes = await organizationAPI.getById(user.org_id);
         setOrgData(orgRes.data);
         
-        // Filter branches for current org
-        const orgBranches = hierarchyRes.data?.filter(h => 
-          h.parent_org_id === user.org_id || 
-          (orgRes.data?.is_parent && h.parent_org_id === orgRes.data.id)
-        ) || [];
+        // Fetch hierarchy - may fail for non-system admins
+        let orgBranches = [];
+        try {
+          const hierarchyRes = await organizationAPI.getHierarchy();
+          // Filter branches for current org
+          orgBranches = (hierarchyRes.data || []).filter(h => 
+            h.parent_org_id === user.org_id || 
+            h.parent_org_id === orgRes.data?.id
+          );
+        } catch (e) {
+          // Try alternative - get all orgs and filter
+          try {
+            const allOrgsRes = await organizationAPI.getAll();
+            orgBranches = (allOrgsRes.data || []).filter(h => 
+              h.parent_org_id === user.org_id || 
+              h.parent_org_id === orgRes.data?.id
+            );
+          } catch (e2) {
+            console.log('Could not fetch branches:', e2);
+          }
+        }
         setBranches(orgBranches);
         
-        if (dashboardRes.data) {
-          setStats(dashboardRes.data);
+        // Fetch dashboard stats
+        try {
+          const dashboardRes = await dashboardAPI.getStats();
+          if (dashboardRes.data) {
+            setStats(dashboardRes.data);
+          }
+        } catch (e) {
+          console.log('Could not fetch dashboard stats:', e);
         }
         
         // Generate branch statistics
