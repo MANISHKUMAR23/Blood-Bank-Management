@@ -131,8 +131,8 @@ export default function ContextSwitcherModal({ open, onOpenChange, onSwitch, cur
           </div>
         )}
 
-        {/* Tree View - Scrollable */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        {/* Tree View - Scrollable with fixed height */}
+        <div className="flex-1 overflow-y-auto max-h-[50vh] min-h-[200px]" style={{ overflowY: 'auto' }}>
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
@@ -143,7 +143,7 @@ export default function ContextSwitcherModal({ open, onOpenChange, onSwitch, cur
               <p>No organizations found</p>
             </div>
           ) : (
-            <div className="space-y-1 pr-2">
+            <div className="space-y-1 pr-2 pb-4">
               {filteredOrgs.map((org) => (
                 <div key={org.id} className="rounded-lg border border-slate-200 overflow-hidden">
                   {/* Organization Row */}
