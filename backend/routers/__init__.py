@@ -32,3 +32,4 @@ from .documents import router as documents_router
 from .compliance import router as compliance_router
 from .training import router as training_router
 from .security import router as security_router
+from .sensitive_actions import router as sensitive_actions_router
