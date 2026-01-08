@@ -446,3 +446,158 @@ async def session_heartbeat(
         sort=[("login_at", -1)]
     )
     return {"status": "ok"}
+
+
+# ============== Context Tree ==============
+
+@router.get("/context-tree")
+async def get_context_tree(
+    search: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Get hierarchical tree of organizations and branches for context switching.
+    Returns a tree structure with parent orgs containing their branch children.
+    """
+    user_type = current_user.get("user_type", "staff")
+    user_org_id = current_user.get("org_id")
+    
+    if user_type not in ["system_admin", "super_admin"]:
+        return {
+            "organizations": [],
+            "total_orgs": 0,
+            "total_branches": 0,
+            "can_switch": False
+        }
+    
+    # Build query based on user type
+    if user_type == "system_admin":
+        # Get all parent orgs
+        parent_query = {"is_parent": True, "is_active": True}
+        if search:
+            parent_query["org_name"] = {"$regex": search, "$options": "i"}
+        
+        parent_orgs = await db.organizations.find(
+            parent_query,
+            {"_id": 0, "id": 1, "org_name": 1, "org_type": 1, "city": 1, "is_parent": 1}
+        ).sort("org_name", 1).to_list(500)
+        
+        # Get all branches
+        all_branches = await db.organizations.find(
+            {"is_parent": {"$ne": True}, "is_active": True},
+            {"_id": 0, "id": 1, "org_name": 1, "org_type": 1, "city": 1, "parent_org_id": 1}
+        ).sort("org_name", 1).to_list(500)
+        
+        # Build tree structure
+        tree = []
+        branch_map = {}
+        for branch in all_branches:
+            parent_id = branch.get("parent_org_id")
+            if parent_id not in branch_map:
+                branch_map[parent_id] = []
+            branch_map[parent_id].append({
+                "id": branch["id"],
+                "name": branch["org_name"],
+                "type": branch.get("org_type", "branch"),
+                "city": branch.get("city", ""),
+                "switch_as": "tenant_admin"
+            })
+        
+        for org in parent_orgs:
+            branches = branch_map.get(org["id"], [])
+            # If searching, also include orgs that have matching branches
+            if search and not branches:
+                matching_branches = [b for b in all_branches 
+                                   if b.get("parent_org_id") == org["id"] 
+                                   and search.lower() in b.get("org_name", "").lower()]
+                branches = [{
+                    "id": b["id"],
+                    "name": b["org_name"],
+                    "type": b.get("org_type", "branch"),
+                    "city": b.get("city", ""),
+                    "switch_as": "tenant_admin"
+                } for b in matching_branches]
+            
+            tree.append({
+                "id": org["id"],
+                "name": org["org_name"],
+                "type": org.get("org_type", "organization"),
+                "city": org.get("city", ""),
+                "is_parent": True,
+                "switch_as": "super_admin",
+                "branches": branches,
+                "branch_count": len(branches)
+            })
+        
+        # If searching, also include standalone branches that match
+        if search:
+            for branch in all_branches:
+                if search.lower() in branch.get("org_name", "").lower():
+                    # Check if this branch's parent is already in tree
+                    parent_in_tree = any(o["id"] == branch.get("parent_org_id") for o in tree)
+                    if not parent_in_tree:
+                        # Add as standalone
+                        tree.append({
+                            "id": branch["id"],
+                            "name": branch["org_name"],
+                            "type": branch.get("org_type", "branch"),
+                            "city": branch.get("city", ""),
+                            "is_parent": False,
+                            "switch_as": "tenant_admin",
+                            "branches": [],
+                            "branch_count": 0
+                        })
+        
+        total_orgs = len(parent_orgs)
+        total_branches = len(all_branches)
+        
+    elif user_type == "super_admin":
+        # Get current org and its branches
+        current_org = await db.organizations.find_one(
+            {"id": user_org_id},
+            {"_id": 0, "id": 1, "org_name": 1, "org_type": 1, "city": 1}
+        )
+        
+        branch_query = {"parent_org_id": user_org_id, "is_active": True}
+        if search:
+            branch_query["org_name"] = {"$regex": search, "$options": "i"}
+        
+        branches = await db.organizations.find(
+            branch_query,
+            {"_id": 0, "id": 1, "org_name": 1, "org_type": 1, "city": 1}
+        ).sort("org_name", 1).to_list(100)
+        
+        branch_list = [{
+            "id": b["id"],
+            "name": b["org_name"],
+            "type": b.get("org_type", "branch"),
+            "city": b.get("city", ""),
+            "switch_as": "tenant_admin"
+        } for b in branches]
+        
+        tree = [{
+            "id": current_org["id"] if current_org else user_org_id,
+            "name": current_org.get("org_name", "Current Organization") if current_org else "Current Organization",
+            "type": current_org.get("org_type", "organization") if current_org else "organization",
+            "city": current_org.get("city", "") if current_org else "",
+            "is_parent": True,
+            "is_current": True,
+            "switch_as": "super_admin",
+            "branches": branch_list,
+            "branch_count": len(branch_list)
+        }]
+        
+        total_orgs = 1
+        total_branches = len(branches)
+    
+    else:
+        tree = []
+        total_orgs = 0
+        total_branches = 0
+    
+    return {
+        "organizations": tree,
+        "total_orgs": total_orgs,
+        "total_branches": total_branches,
+        "can_switch": user_type in ["system_admin", "super_admin"]
+    }
