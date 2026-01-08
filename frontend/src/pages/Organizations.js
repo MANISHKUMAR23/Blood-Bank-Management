@@ -25,6 +25,7 @@ import {
 } from '../components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Checkbox } from '../components/ui/checkbox';
+import SensitiveActionModal from '../components/SensitiveActionModal';
 
 const ORG_TYPES = [
   { value: 'hospital_network', label: 'Hospital Network' },
