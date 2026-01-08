@@ -65,7 +65,7 @@ const getOccupancyColor = (percent) => {
 export default function InventoryEnhanced() {
   // State
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState(VIEW_MODES.STORAGE);
+  const [viewMode, setViewMode] = useState(VIEW_MODES.BLOOD_GROUP); // Default to Blood Group view
   const [displayMode, setDisplayMode] = useState('grid'); // 'grid' or 'list'
   const [data, setData] = useState(null);
   
