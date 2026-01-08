@@ -2147,31 +2147,129 @@ function BloodGroupView({ data, displayMode, selectedItems, onToggleSelect, onPr
 }
 
 function ComponentTypeView({ data, displayMode, selectedItems, onToggleSelect, onPrintLabel, onViewAudit }) {
+  const [selectedType, setSelectedType] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
+  const handleCardClick = (type) => {
+    setSelectedType(type);
+    setShowDetailModal(true);
+  };
+
   if (!data) return null;
 
+  const componentColors = {
+    'whole_blood': 'from-red-500 to-red-600',
+    'prc': 'from-rose-500 to-rose-600',
+    'plasma': 'from-amber-400 to-amber-500',
+    'ffp': 'from-yellow-400 to-yellow-500',
+    'platelets': 'from-purple-400 to-purple-500',
+    'cryoprecipitate': 'from-blue-400 to-blue-500',
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {data.map((type) => (
-        <Card key={type.component_type}>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base capitalize">{type.display_name}</CardTitle>
-              <span className="text-2xl font-bold text-teal-600">{type.count}</span>
-            </div>
-            <CardDescription className="flex items-center gap-1">
-              <Thermometer className="w-3 h-3" />
-              {type.storage_temp}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Total Volume:</span>
-              <span className="font-medium">{type.total_volume?.toLocaleString()} mL</span>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {data.map((type) => (
+          <Card 
+            key={type.component_type}
+            className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] hover:border-teal-400"
+            onClick={() => handleCardClick(type)}
+          >
+            <CardContent className="pt-4">
+              <div className="flex flex-col items-center text-center">
+                <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${componentColors[type.component_type] || 'from-slate-400 to-slate-500'} flex items-center justify-center mb-2 shadow-md`}>
+                  <Layers className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-2xl font-bold text-slate-700">{type.count}</div>
+                <div className="text-sm font-medium capitalize text-slate-600">{type.display_name}</div>
+                <div className="text-xs text-slate-500 mt-1">{type.total_volume?.toLocaleString()} mL</div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Component Type Detail Modal */}
+      <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${componentColors[selectedType?.component_type] || 'from-slate-400 to-slate-500'} flex items-center justify-center shadow-md`}>
+                <Layers className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span className="text-xl capitalize">{selectedType?.display_name}</span>
+                <p className="text-sm font-normal text-slate-500">{selectedType?.count} items • {selectedType?.total_volume?.toLocaleString()} mL</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-3 gap-3 py-3">
+            <Card className="p-3 text-center">
+              <div className="text-xl font-bold text-teal-600">{selectedType?.count || 0}</div>
+              <div className="text-xs text-slate-500">Total Items</div>
+            </Card>
+            <Card className="p-3 text-center">
+              <div className="text-xl font-bold text-blue-600">{selectedType?.total_volume?.toLocaleString() || 0}</div>
+              <div className="text-xs text-slate-500">Total Volume (mL)</div>
+            </Card>
+            <Card className="p-3 text-center">
+              <div className="text-xl font-bold text-slate-600">{selectedType?.storage_temp || '-'}</div>
+              <div className="text-xs text-slate-500">Storage Temp</div>
+            </Card>
+          </div>
+
+          <ScrollArea className="flex-1">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-8"><Checkbox /></TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Blood Group</TableHead>
+                  <TableHead>Volume</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Expiry</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {selectedType?.items?.slice(0, 50).map((item) => {
+                  const itemId = item.id || item.unit_id || item.component_id;
+                  const isSelected = selectedItems?.some(i => (i.id || i.unit_id || i.component_id) === itemId);
+                  return (
+                    <TableRow key={itemId} className={isSelected ? 'bg-teal-50' : ''}>
+                      <TableCell>
+                        <Checkbox 
+                          checked={isSelected}
+                          onCheckedChange={() => onToggleSelect(item)}
+                          disabled={item.status !== 'ready_to_use'}
+                        />
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{item.item_id || itemId}</TableCell>
+                      <TableCell>
+                        <span className="blood-group-badge">{item.blood_group || item.confirmed_blood_group || '-'}</span>
+                      </TableCell>
+                      <TableCell>{item.volume || item.current_volume} mL</TableCell>
+                      <TableCell>
+                        <Badge className={STATUS_COLORS[item.status] || 'bg-slate-100'}>
+                          {item.status?.replace('_', ' ')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">{item.storage_location || item.current_location || '-'}</TableCell>
+                      <TableCell className="text-sm">{item.expiry_date || '-'}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+
+          <DialogFooter className="border-t pt-4">
+            <Button variant="outline" onClick={() => setShowDetailModal(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
