@@ -443,3 +443,15 @@ frontend:
       - working: "pending"
         agent: "main"
         comment: "Implemented Blood Requests page with incoming/outgoing tabs, create dialog, fulfill dialog, delivery confirmation."
+
+  - task: "User Management - Separate Admin/Staff Lists with Breakdown Cards"
+    implemented: true
+    working: "pending"
+    file: "/app/frontend/src/pages/UserManagement.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+      - working: "pending"
+        agent: "main"
+        comment: "Complete page redesign with: 1) Tabs for Admin Users and Staff Users, 2) Admin breakdown cards (System/Super/Tenant admins), 3) Staff role breakdown cards (8 roles), 4) Filters (Type/Role, Organization, Status, Search), 5) Add Admin/Staff buttons, 6) Tables with Name, Email, Type/Role, Organization, Status, Last Login, Actions columns, 7) Add/Edit User dialog with all fields."
