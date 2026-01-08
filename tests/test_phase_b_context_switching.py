@@ -17,7 +17,7 @@ import requests
 import os
 import jwt
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://docusafe-17.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://bloodsync-platform.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 SYSTEM_ADMIN_EMAIL = "admin@bloodbank.com"

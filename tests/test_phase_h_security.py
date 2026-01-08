@@ -7,7 +7,7 @@ import requests
 import os
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://docusafe-17.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://bloodsync-platform.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 SYSTEM_ADMIN = {"email": "admin@bloodbank.com", "password": "adminpassword"}
