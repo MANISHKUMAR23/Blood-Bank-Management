@@ -87,7 +87,7 @@ export default function NetworkDashboard() {
     return networkData.organizations.reduce((sum, org) => sum + (org.expiring_count || 0), 0);
   };
 
-  const filteredOrgs = React.useMemo(() => {
+  const filteredOrgs = useMemo(() => {
     if (!networkData?.organizations) return [];
     
     if (selectedOrg === 'all') {
