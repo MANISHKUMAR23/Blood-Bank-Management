@@ -553,4 +553,16 @@ export const logisticsEnhancedAPI = {
   getDashboard: () => api.get('/logistics/dashboard'),
 };
 
+// Sensitive Actions API - Re-authentication for admin operations
+export const sensitiveActionsAPI = {
+  verifyPassword: (data) => api.post('/sensitive-actions/verify-password', data),
+  requestOtp: (data) => api.post('/sensitive-actions/request-otp', data),
+  verifyOtp: (data) => api.post('/sensitive-actions/verify-otp', data),
+  validateToken: (token, actionType, targetId) => 
+    api.post('/sensitive-actions/validate-token', null, { 
+      params: { verification_token: token, action_type: actionType, target_id: targetId } 
+    }),
+  getActionLogs: (limit = 50) => api.get('/sensitive-actions/action-logs', { params: { limit } }),
+};
+
 export default api;
