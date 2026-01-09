@@ -593,13 +593,13 @@ export default function BloodRequests() {
 
       {/* Create Request Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Request Blood</DialogTitle>
             <DialogDescription>Create a new blood request from another organization</DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto space-y-4 py-2">
             {/* Request Type */}
             <div>
               <Label>Request Type</Label>
@@ -770,7 +770,7 @@ export default function BloodRequests() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0 pt-4 border-t">
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancel</Button>
             <Button className="bg-teal-600 hover:bg-teal-700" onClick={handleCreateRequest}>
               Submit Request
