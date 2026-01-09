@@ -162,7 +162,7 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
   - [x] System-wide and org-specific policies
 - [x] **Multi-Factor Authentication (MFA)**:
   - [x] TOTP setup with QR code generation (Google Authenticator/Authy compatible)
-  - [x] Email OTP as backup method
+  - [x] Email OTP as backup method (MOCKED - prints to console)
   - [x] 10 backup recovery codes
   - [x] MFA enable/disable/status
   - [x] Admin can enforce MFA for users
@@ -180,6 +180,48 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
   - [x] Sessions tab with active session list
   - [x] Password Policy tab (admin only) with editable settings
   - [x] API Keys tab (org users) with create/revoke
+
+### Phase I: Data Backup & Recovery (COMPLETE - Jan 9, 2026)
+- [x] **Backend Backup API** (`/app/backend/routers/backups.py`):
+  - [x] `POST /api/backups/create` - Create backup (role-scoped)
+  - [x] `GET /api/backups/list` - List accessible backups
+  - [x] `GET /api/backups/collections` - List collections for backup
+  - [x] `POST /api/backups/restore` - Restore from backup
+  - [x] `DELETE /api/backups/{backup_id}` - Delete backup
+  - [x] `GET /api/backups/{backup_id}/preview` - Preview backup contents
+  - [x] `GET /api/backups/download/{backup_id}` - Download backup as ZIP
+- [x] **Role-Based Access Control**:
+  - [x] System Admin: Full system-wide backups using mongodump/mongorestore
+  - [x] Super Admin: Org + branches data as filtered JSON (cannot see system backups)
+  - [x] Tenant Admin: Branch-only data as filtered JSON (cannot see system/org backups)
+- [x] **Frontend Backup Management Page** (`/app/frontend/src/pages/BackupManagement.js`):
+  - [x] Create backup with optional file inclusion
+  - [x] Backup list with scope, size, creation date
+  - [x] Preview backup contents before restore
+  - [x] Selective restore by collections
+  - [x] Download backup as ZIP
+  - [x] Delete backups (own backups only for non-system admins)
+- [x] Backups stored locally at `/app/backups/`
+- [x] Audit logging for all backup operations
+
+### UI/UX Fixes (COMPLETE - Jan 9, 2026)
+- [x] Blood Request form dialog made scrollable (`/app/frontend/src/pages/BloodRequests.js`)
+- [x] Login page organization selector upgraded to hierarchical searchable UI (`/app/frontend/src/pages/Login.js`)
+- [x] Inventory Management view-switching runtime error fixed (`/app/frontend/src/pages/InventoryEnhanced.js`)
+- [x] Duplicate Security Settings nav item for Tenant Admins fixed (`/app/frontend/src/components/Layout.js`)
+- [x] Added stable `data-testid` attributes to Inventory view selector for test reliability
+
+### Access Control Fixes (COMPLETE - Jan 9, 2026)
+- [x] Active sessions now correctly tracked and displayed on login
+- [x] Tenant Admins granted access to Audit Logs and Security Settings
+- [x] System Admins granted access to Configuration module
+- [x] User Management scoped by role (System sees all, Super sees org+branches, Tenant sees branch only)
+
+### Malaysian ID Support (COMPLETE - Jan 9, 2026)
+- [x] All donor forms updated to use Malaysian ID types (MyKad, MyKas, MyKid, MyPR, Passport)
+- [x] Auto-formatting for MyKad (XXXXXX-XX-XXXX)
+- [x] Updated validation patterns
+- [x] Files: DonorRegistration.js, DonorLoginForm.js, DonorRegisterForm.js
 
 ---
 
