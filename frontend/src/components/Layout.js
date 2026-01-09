@@ -44,6 +44,7 @@ const platformModules = [
   { path: '/audit-logs', icon: History, label: 'Audit Logs', category: 'platform' },
   { path: '/users', icon: Settings, label: 'User Management', category: 'platform' },
   { path: '/security', icon: Lock, label: 'Security Settings', category: 'platform' },
+  { path: '/backups', icon: HardDrive, label: 'Backup & Recovery', category: 'platform' },
 ];
 
 // Operational modules - visible when in org/branch context
