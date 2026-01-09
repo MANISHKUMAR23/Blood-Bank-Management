@@ -202,8 +202,26 @@ export default function BackupManagement() {
     return new Date(dateStr).toLocaleString();
   };
 
-  // Check if user is system admin
-  if (user?.user_type !== 'system_admin') {
+  // Get backup scope badge
+  const getScopeBadge = (backup) => {
+    const scope = backup.backup_scope || 'system';
+    if (scope === 'system') {
+      return <Badge className="bg-purple-100 text-purple-700">System</Badge>;
+    } else if (scope === 'org') {
+      return <Badge className="bg-blue-100 text-blue-700">Organization</Badge>;
+    } else {
+      return <Badge className="bg-green-100 text-green-700">Branch</Badge>;
+    }
+  };
+
+  // Check if user has admin access
+  const isAdmin = user?.role === 'admin';
+  const userType = user?.user_type;
+  const isSystemAdmin = userType === 'system_admin';
+  const isSuperAdmin = userType === 'super_admin';
+  const isTenantAdmin = userType === 'tenant_admin';
+
+  if (!isAdmin) {
     return (
       <div className="p-6">
         <Card className="border-red-200 bg-red-50">
@@ -212,7 +230,7 @@ export default function BackupManagement() {
               <AlertTriangle className="w-6 h-6" />
               <div>
                 <p className="font-medium">Access Denied</p>
-                <p className="text-sm">Only System Administrators can access the Backup Management module.</p>
+                <p className="text-sm">Only Administrators can access the Backup Management module.</p>
               </div>
             </div>
           </CardContent>
@@ -221,13 +239,30 @@ export default function BackupManagement() {
     );
   }
 
+  // Get scope description based on user type
+  const getScopeDescription = () => {
+    if (isSystemAdmin) {
+      return "Full database backup including all organizations and system data";
+    } else if (isSuperAdmin) {
+      return "Backup includes data from your organization and all its branches";
+    } else {
+      return "Backup includes data from your branch only";
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Backup & Recovery</h1>
-          <p className="text-slate-500">Manage database backups and restore data</p>
+          <p className="text-slate-500">
+            {isSystemAdmin 
+              ? "Manage database backups and restore data" 
+              : isSuperAdmin 
+                ? "Manage backups for your organization and branches"
+                : "Manage backups for your branch"}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={fetchBackups} disabled={loading}>
