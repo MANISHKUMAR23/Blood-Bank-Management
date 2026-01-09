@@ -132,6 +132,17 @@ export default function Login() {
     }
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showOrgSelector && !e.target.closest('[data-org-selector]')) {
+        setShowOrgSelector(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showOrgSelector]);
+
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Image */}
