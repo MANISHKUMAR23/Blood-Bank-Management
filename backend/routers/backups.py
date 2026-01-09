@@ -381,17 +381,23 @@ async def validate_backup_access(backup_id: str, current_user: dict) -> dict:
     backup_org_id = metadata.get("org_id")
     backup_scope = metadata.get("backup_scope", "system")
     
-    # Check access
+    # Check access based on user type and backup scope
     if access_level == "system":
-        pass  # Full access
+        pass  # Full access to all backups
     elif access_level == "org":
+        # Super admin: NO access to system backups, only their org + branches
+        if backup_scope == "system":
+            raise HTTPException(status_code=403, detail="Access denied. System backups are only accessible by System Administrators.")
         # Get org + branches
         branches = await db.organizations.find({"parent_org_id": org_id}, {"id": 1}).to_list(100)
         org_ids = [org_id] + [b["id"] for b in branches]
-        if backup_scope != "system" and backup_org_id not in org_ids:
+        if backup_org_id not in org_ids:
             raise HTTPException(status_code=403, detail="Access denied to this backup")
     elif access_level == "branch":
-        if backup_scope != "system" and backup_org_id != org_id:
+        # Tenant admin: NO access to system or org backups, only their branch
+        if backup_scope in ["system", "org"]:
+            raise HTTPException(status_code=403, detail="Access denied. You can only access backups for your branch.")
+        if backup_org_id != org_id:
             raise HTTPException(status_code=403, detail="Access denied to this backup")
     
     return {"backup_path": backup_path, "metadata": metadata, "access_level": access_level}
