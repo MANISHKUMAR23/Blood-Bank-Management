@@ -1817,7 +1817,7 @@ function BloodGroupView({ data, displayMode, selectedItems, onToggleSelect, onPr
     return grouped;
   };
 
-  if (!data) return null;
+  if (!data || !Array.isArray(data)) return null;
 
   const bloodGroupColors = {
     'A+': 'from-red-400 to-red-600',
