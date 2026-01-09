@@ -221,6 +221,30 @@ async def login(credentials: UserLogin, request: Request):
         user_type=user_type
     )
     
+    # Create user session record
+    client_ip = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent", "")
+    device_info = get_device_info(user_agent)
+    
+    session_data = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "user_email": user["email"],
+        "user_name": user.get("full_name"),
+        "user_type": user_type,
+        "user_org_id": selected_org_id,
+        "ip_address": client_ip,
+        "user_agent": user_agent,
+        "device_info": device_info,
+        "login_at": datetime.now(timezone.utc).isoformat(),
+        "last_activity": datetime.now(timezone.utc).isoformat(),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
+        "is_active": True,
+        "is_current": True  # Will be used to mark the current session
+    }
+    
+    await db.user_sessions.insert_one(session_data)
+    
     # Log successful login
     await AuditService.log_auth(
         AuditAction.LOGIN,
