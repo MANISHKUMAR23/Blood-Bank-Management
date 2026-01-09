@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { organizationAPI } from '../lib/api';
 import { toast } from 'sonner';
-import { Droplet, Eye, EyeOff, LogIn, Shield, Building2 } from 'lucide-react';
+import { 
+  Droplet, Eye, EyeOff, LogIn, Shield, Building2, 
+  ChevronRight, ChevronDown, Search, MapPin, Check, X
+} from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Badge } from '../components/ui/badge';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -17,6 +20,12 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [organizations, setOrganizations] = useState([]);
   const [loadingOrgs, setLoadingOrgs] = useState(true);
+  
+  // Organization selector state
+  const [showOrgSelector, setShowOrgSelector] = useState(false);
+  const [orgSearchTerm, setOrgSearchTerm] = useState('');
+  const [expandedOrgs, setExpandedOrgs] = useState(new Set());
+  const [selectedOrg, setSelectedOrg] = useState(null);
   
   const [loginForm, setLoginForm] = useState({ email: '', password: '', org_id: '' });
 
@@ -33,6 +42,79 @@ export default function Login() {
     } finally {
       setLoadingOrgs(false);
     }
+  };
+
+  // Build hierarchical tree from flat org list
+  const orgTree = useMemo(() => {
+    const parentOrgs = organizations.filter(o => o.is_parent || !o.parent_org_id);
+    const branchMap = {};
+    
+    organizations.forEach(org => {
+      if (org.parent_org_id) {
+        if (!branchMap[org.parent_org_id]) {
+          branchMap[org.parent_org_id] = [];
+        }
+        branchMap[org.parent_org_id].push(org);
+      }
+    });
+    
+    return parentOrgs.map(parent => ({
+      ...parent,
+      branches: branchMap[parent.id] || []
+    }));
+  }, [organizations]);
+
+  // Filter organizations based on search
+  const filteredOrgTree = useMemo(() => {
+    if (!orgSearchTerm) return orgTree;
+    
+    const term = orgSearchTerm.toLowerCase();
+    return orgTree.filter(org => {
+      const orgMatches = org.org_name?.toLowerCase().includes(term) ||
+                        org.city?.toLowerCase().includes(term);
+      const branchMatches = org.branches?.some(b => 
+        b.org_name?.toLowerCase().includes(term) || 
+        b.city?.toLowerCase().includes(term)
+      );
+      return orgMatches || branchMatches;
+    }).map(org => ({
+      ...org,
+      branches: org.branches?.filter(b =>
+        b.org_name?.toLowerCase().includes(term) ||
+        b.city?.toLowerCase().includes(term) ||
+        org.org_name?.toLowerCase().includes(term)
+      ) || []
+    }));
+  }, [orgTree, orgSearchTerm]);
+
+  // Auto-expand when searching
+  useEffect(() => {
+    if (orgSearchTerm) {
+      setExpandedOrgs(new Set(filteredOrgTree.map(o => o.id)));
+    }
+  }, [orgSearchTerm, filteredOrgTree]);
+
+  const toggleExpand = (orgId, e) => {
+    e.stopPropagation();
+    const newExpanded = new Set(expandedOrgs);
+    if (newExpanded.has(orgId)) {
+      newExpanded.delete(orgId);
+    } else {
+      newExpanded.add(orgId);
+    }
+    setExpandedOrgs(newExpanded);
+  };
+
+  const selectOrganization = (org) => {
+    setSelectedOrg(org);
+    setLoginForm({ ...loginForm, org_id: org.id });
+    setShowOrgSelector(false);
+    setOrgSearchTerm('');
+  };
+
+  const clearSelection = () => {
+    setSelectedOrg(null);
+    setLoginForm({ ...loginForm, org_id: '' });
   };
 
   const handleLogin = async (e) => {
