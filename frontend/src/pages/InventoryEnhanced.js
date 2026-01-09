@@ -179,6 +179,11 @@ export default function InventoryEnhanced() {
     }
   }, [viewMode]);
 
+  // Reset data when view mode changes
+  useEffect(() => {
+    setData(null);
+  }, [viewMode]);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
