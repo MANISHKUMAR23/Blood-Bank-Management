@@ -632,26 +632,26 @@ export default function InventoryEnhanced() {
           </div>
 
           {/* View Mode Selector */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" data-testid="inventory-view-mode-container">
             <span className="text-sm text-slate-500">View:</span>
             <Select value={viewMode} onValueChange={setViewMode}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40" data-testid="inventory-view-selector">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={VIEW_MODES.STORAGE}>
+                <SelectItem value={VIEW_MODES.STORAGE} data-testid="view-option-storage">
                   <span className="flex items-center"><MapPin className="w-4 h-4 mr-2" />By Storage</span>
                 </SelectItem>
-                <SelectItem value={VIEW_MODES.BLOOD_GROUP}>
+                <SelectItem value={VIEW_MODES.BLOOD_GROUP} data-testid="view-option-blood-group">
                   <span className="flex items-center"><Droplet className="w-4 h-4 mr-2" />By Blood Group</span>
                 </SelectItem>
-                <SelectItem value={VIEW_MODES.COMPONENT_TYPE}>
+                <SelectItem value={VIEW_MODES.COMPONENT_TYPE} data-testid="view-option-component-type">
                   <span className="flex items-center"><Layers className="w-4 h-4 mr-2" />By Component</span>
                 </SelectItem>
-                <SelectItem value={VIEW_MODES.EXPIRY}>
+                <SelectItem value={VIEW_MODES.EXPIRY} data-testid="view-option-expiry">
                   <span className="flex items-center"><Clock className="w-4 h-4 mr-2" />By Expiry (FEFO)</span>
                 </SelectItem>
-                <SelectItem value={VIEW_MODES.STATUS}>
+                <SelectItem value={VIEW_MODES.STATUS} data-testid="view-option-status">
                   <span className="flex items-center"><Activity className="w-4 h-4 mr-2" />By Status</span>
                 </SelectItem>
               </SelectContent>
