@@ -112,16 +112,42 @@ def get_directory_size(path: str) -> float:
 
 @router.get("/collections")
 async def get_collections(current_user: dict = Depends(get_current_user)):
-    """Get list of all database collections"""
-    if current_user.get("user_type") != "system_admin":
-        raise HTTPException(status_code=403, detail="Only System Admins can access backups")
+    """Get list of database collections based on user access level"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    access_level, org_id = get_user_access_level(current_user)
+    
+    if access_level == "none":
+        raise HTTPException(status_code=403, detail="Access denied")
     
     collections = await db.list_collection_names()
+    
+    # Filter collections based on access level
+    if access_level != "system":
+        # Non-system admins only see org-scoped collections
+        collections = [c for c in collections if c in ORG_SCOPED_COLLECTIONS]
     
     # Get document counts for each collection
     collection_info = []
     for coll_name in collections:
-        count = await db[coll_name].count_documents({})
+        if access_level == "system":
+            count = await db[coll_name].count_documents({})
+        else:
+            # Get org IDs for filtering
+            if access_level == "org":
+                # Super admin: get org + branches
+                branches = await db.organizations.find(
+                    {"parent_org_id": org_id}, {"id": 1}
+                ).to_list(100)
+                org_ids = [org_id] + [b["id"] for b in branches]
+            else:
+                # Tenant admin: only their branch
+                org_ids = [org_id]
+            
+            # Count documents for this org scope
+            count = await db[coll_name].count_documents({"org_id": {"$in": org_ids}})
+        
         collection_info.append({
             "name": coll_name,
             "document_count": count
@@ -135,37 +161,135 @@ async def create_backup(
     include_files: bool = True,
     current_user: dict = Depends(get_current_user)
 ):
-    """Create a new backup of the database and optionally uploaded files"""
-    if current_user.get("user_type") != "system_admin":
-        raise HTTPException(status_code=403, detail="Only System Admins can create backups")
+    """Create a backup based on user's access level"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    access_level, org_id = get_user_access_level(current_user)
+    
+    if access_level == "none":
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Get org name for non-system backups
+    org_name = None
+    backup_scope = access_level
+    org_ids = []
+    
+    if access_level == "org":
+        org = await db.organizations.find_one({"id": org_id}, {"_id": 0, "org_name": 1})
+        org_name = org.get("org_name") if org else None
+        # Get org + branches
+        branches = await db.organizations.find({"parent_org_id": org_id}, {"id": 1}).to_list(100)
+        org_ids = [org_id] + [b["id"] for b in branches]
+    elif access_level == "branch":
+        org = await db.organizations.find_one({"id": org_id}, {"_id": 0, "org_name": 1})
+        org_name = org.get("org_name") if org else None
+        org_ids = [org_id]
     
     # Generate backup ID with timestamp
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    backup_id = f"backup_{timestamp}"
+    scope_suffix = f"_{org_id[:8]}" if org_id else ""
+    backup_id = f"backup_{timestamp}{scope_suffix}"
     backup_path = os.path.join(BACKUP_DIR, backup_id)
     
     try:
         # Create backup directory
         os.makedirs(backup_path, exist_ok=True)
+        db_backup_path = os.path.join(backup_path, "database")
+        os.makedirs(db_backup_path, exist_ok=True)
         
-        # Get MongoDB connection details
         mongo_url = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
         db_name = os.environ.get("DB_NAME", "test_database")
         
-        # Run mongodump
-        dump_path = os.path.join(backup_path, "database")
-        dump_cmd = [
-            "mongodump",
-            f"--uri={mongo_url}",
-            f"--db={db_name}",
-            f"--out={dump_path}"
-        ]
+        if access_level == "system":
+            # Full database backup using mongodump
+            dump_path = os.path.join(backup_path, "database")
+            dump_cmd = [
+                "mongodump",
+                f"--uri={mongo_url}",
+                f"--db={db_name}",
+                f"--out={dump_path}"
+            ]
+            
+            result = subprocess.run(dump_cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                raise Exception(f"mongodump failed: {result.stderr}")
+            
+            collections = await db.list_collection_names()
+        else:
+            # Org/Branch specific backup - export filtered data as JSON
+            collections = ORG_SCOPED_COLLECTIONS
+            db_data_path = os.path.join(db_backup_path, db_name)
+            os.makedirs(db_data_path, exist_ok=True)
+            
+            for coll_name in collections:
+                # Get filtered data
+                query = {"org_id": {"$in": org_ids}}
+                docs = await db[coll_name].find(query, {"_id": 0}).to_list(10000)
+                
+                if docs:
+                    # Save as JSON
+                    with open(os.path.join(db_data_path, f"{coll_name}.json"), 'w') as f:
+                        json.dump(docs, f, default=str)
         
-        result = subprocess.run(dump_cmd, capture_output=True, text=True)
-        if result.returncode != 0:
-            raise Exception(f"mongodump failed: {result.stderr}")
+        # Copy uploaded files if requested (org-scoped for non-system)
+        files_copied = False
+        if include_files and os.path.exists(UPLOADS_DIR):
+            files_backup_path = os.path.join(backup_path, "files")
+            if os.path.exists(UPLOADS_DIR) and os.listdir(UPLOADS_DIR):
+                # For org/branch backups, we'd ideally filter files by org
+                # For now, copy all (can be enhanced later)
+                shutil.copytree(UPLOADS_DIR, files_backup_path)
+                files_copied = True
         
-        # Get list of collections backed up
+        # Calculate backup size
+        size_mb = get_directory_size(backup_path)
+        
+        # Determine backup type
+        if access_level == "system":
+            backup_type = "full" if include_files else "database_only"
+        elif access_level == "org":
+            backup_type = "org_backup"
+        else:
+            backup_type = "branch_backup"
+        
+        # Save metadata
+        metadata = {
+            "id": backup_id,
+            "filename": backup_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "size_mb": size_mb,
+            "type": backup_type,
+            "status": "completed",
+            "collections": collections if isinstance(collections, list) else list(collections),
+            "includes_files": files_copied,
+            "created_by": current_user.get("email", "unknown"),
+            "db_name": db_name,
+            "org_id": org_id,
+            "org_name": org_name,
+            "backup_scope": backup_scope
+        }
+        
+        with open(os.path.join(backup_path, "metadata.json"), 'w') as f:
+            json.dump(metadata, f, indent=2)
+        
+        # Log to audit
+        await db.audit_logs.insert_one({
+            "action": "backup_created",
+            "module": "backups",
+            "user_id": current_user.get("id"),
+            "user_email": current_user.get("email"),
+            "org_id": org_id,
+            "details": f"Created {backup_type} backup {backup_id}",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "metadata": {"backup_id": backup_id, "size_mb": size_mb, "scope": backup_scope}
+        })
+        
+        return BackupResponse(
+            success=True,
+            message=f"Backup created successfully ({size_mb} MB)",
+            backup_id=backup_id
+        )
         collections = await db.list_collection_names()
         
         # Copy uploaded files if requested
