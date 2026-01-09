@@ -1,0 +1,31 @@
+{
+  "id": "backup_20260109_102907_61d41b01",
+  "filename": "backup_20260109_102907_61d41b01",
+  "created_at": "2026-01-09T10:29:07.149570+00:00",
+  "size_mb": 0.27,
+  "type": "org_backup",
+  "status": "completed",
+  "collections": [
+    "donors",
+    "donations",
+    "blood_units",
+    "components",
+    "inventory",
+    "blood_requests",
+    "issuances",
+    "screenings",
+    "laboratory_results",
+    "qc_validations",
+    "storage_locations",
+    "custody_records",
+    "alerts",
+    "donation_sessions",
+    "donor_requests"
+  ],
+  "includes_files": true,
+  "created_by": "admin@bloodbank.com",
+  "db_name": "test_database",
+  "org_id": "61d41b01-1b7d-4064-9cff-3fa8a0fd554b",
+  "org_name": "BloodLink Central",
+  "backup_scope": "org"
+}
