@@ -305,7 +305,17 @@ async def list_backups(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Admin access required")
     
     access_level, org_id = get_user_access_level(current_user)
-        raise HTTPException(status_code=403, detail="Only System Admins can access backups")
+    
+    if access_level == "none":
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Get org IDs for filtering (for super admin)
+    org_ids = []
+    if access_level == "org" and org_id:
+        branches = await db.organizations.find({"parent_org_id": org_id}, {"id": 1}).to_list(100)
+        org_ids = [org_id] + [b["id"] for b in branches]
+    elif access_level == "branch" and org_id:
+        org_ids = [org_id]
     
     backups = []
     
@@ -315,20 +325,36 @@ async def list_backups(current_user: dict = Depends(get_current_user)):
             if os.path.isdir(item_path) and item.startswith("backup_"):
                 metadata = get_backup_metadata(item)
                 if metadata:
-                    backups.append(BackupInfo(**metadata))
+                    # Filter based on access level
+                    backup_org_id = metadata.get("org_id")
+                    backup_scope = metadata.get("backup_scope", "system")
+                    
+                    # System admin sees all
+                    if access_level == "system":
+                        backups.append(BackupInfo(**metadata))
+                    # Super admin sees system backups + their org backups
+                    elif access_level == "org":
+                        if backup_scope == "system" or backup_org_id in org_ids:
+                            backups.append(BackupInfo(**metadata))
+                    # Tenant admin sees system backups + their branch backups
+                    elif access_level == "branch":
+                        if backup_scope == "system" or backup_org_id == org_id:
+                            backups.append(BackupInfo(**metadata))
                 else:
-                    # Create basic info for backups without metadata
-                    backups.append(BackupInfo(
-                        id=item,
-                        filename=item,
-                        created_at=datetime.fromtimestamp(os.path.getctime(item_path)).isoformat(),
-                        size_mb=get_directory_size(item_path),
-                        type="unknown",
-                        status="completed",
-                        collections=[],
-                        includes_files=os.path.exists(os.path.join(item_path, "files")),
-                        created_by="unknown"
-                    ))
+                    # Create basic info for backups without metadata (only visible to system admin)
+                    if access_level == "system":
+                        backups.append(BackupInfo(
+                            id=item,
+                            filename=item,
+                            created_at=datetime.fromtimestamp(os.path.getctime(item_path)).isoformat(),
+                            size_mb=get_directory_size(item_path),
+                            type="unknown",
+                            status="completed",
+                            collections=[],
+                            includes_files=os.path.exists(os.path.join(item_path, "files")),
+                            created_by="unknown",
+                            backup_scope="system"
+                        ))
     
     # Sort by creation date (newest first)
     backups.sort(key=lambda x: x.created_at, reverse=True)
