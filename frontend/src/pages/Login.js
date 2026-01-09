@@ -184,40 +184,186 @@ export default function Login() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
-              {/* Organization Selection */}
-              {organizations.length > 0 && (
-                <div className="space-y-2">
-                  <Label htmlFor="org-select">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4" />
-                      Organization
-                    </div>
-                  </Label>
-                  <Select 
-                    value={loginForm.org_id} 
-                    onValueChange={(value) => setLoginForm({ ...loginForm, org_id: value })}
+              {/* Organization Selection - Hierarchical Dropdown */}
+              <div className="space-y-2">
+                <Label>
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4" />
+                    Organization
+                  </div>
+                </Label>
+                
+                <div className="relative">
+                  {/* Selected Org Display / Trigger */}
+                  <div
+                    onClick={() => setShowOrgSelector(!showOrgSelector)}
+                    className="w-full flex items-center justify-between px-3 py-2 border rounded-md cursor-pointer hover:border-teal-400 transition-colors bg-white"
+                    data-testid="org-select"
                   >
-                    <SelectTrigger id="org-select" data-testid="org-select">
-                      <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select organization (optional for system admin)"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">
-                        <span className="text-slate-500">No organization (System Admin)</span>
-                      </SelectItem>
-                      {organizations.map((org) => (
-                        <SelectItem key={org.id} value={org.id}>
-                          <div className="flex items-center gap-2">
-                            <span>{org.org_name}</span>
-                            {org.city && (
-                              <span className="text-xs text-slate-500">({org.city})</span>
-                            )}
+                    {selectedOrg ? (
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
+                          selectedOrg.is_parent || !selectedOrg.parent_org_id 
+                            ? 'bg-blue-500' 
+                            : 'bg-emerald-500'
+                        }`}>
+                          <Building2 className="w-3 h-3 text-white" />
+                        </div>
+                        <span className="truncate font-medium">{selectedOrg.org_name}</span>
+                        {selectedOrg.city && (
+                          <span className="text-xs text-slate-500">({selectedOrg.city})</span>
+                        )}
+                        {selectedOrg.parent_org_id && (
+                          <Badge variant="outline" className="text-xs">Branch</Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-500">
+                        {loadingOrgs ? "Loading organizations..." : "Select organization (optional for System Admin)"}
+                      </span>
+                    )}
+                    <div className="flex items-center gap-1">
+                      {selectedOrg && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); clearSelection(); }}
+                          className="p-1 hover:bg-slate-100 rounded"
+                        >
+                          <X className="w-4 h-4 text-slate-400" />
+                        </button>
+                      )}
+                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showOrgSelector ? 'rotate-180' : ''}`} />
+                    </div>
+                  </div>
+
+                  {/* Dropdown Panel */}
+                  {showOrgSelector && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg overflow-hidden">
+                      {/* Search */}
+                      <div className="p-2 border-b">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <Input
+                            placeholder="Search organizations..."
+                            value={orgSearchTerm}
+                            onChange={(e) => setOrgSearchTerm(e.target.value)}
+                            className="pl-9 h-9"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+
+                      {/* System Admin Option */}
+                      <div
+                        onClick={() => { clearSelection(); setShowOrgSelector(false); }}
+                        className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b"
+                      >
+                        <div className="w-6 h-6 rounded bg-slate-200 flex items-center justify-center">
+                          <Shield className="w-3 h-3 text-slate-600" />
+                        </div>
+                        <span className="text-slate-600">No organization (System Admin)</span>
+                      </div>
+
+                      {/* Organizations Tree - Scrollable */}
+                      <div className="max-h-64 overflow-y-auto">
+                        {loadingOrgs ? (
+                          <div className="p-4 text-center text-slate-500">Loading...</div>
+                        ) : filteredOrgTree.length === 0 ? (
+                          <div className="p-4 text-center text-slate-500">No organizations found</div>
+                        ) : (
+                          <div className="py-1">
+                            {filteredOrgTree.map((org) => (
+                              <div key={org.id}>
+                                {/* Parent Organization */}
+                                <div
+                                  className={`flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer ${
+                                    selectedOrg?.id === org.id ? 'bg-teal-50' : ''
+                                  }`}
+                                >
+                                  {/* Expand Button */}
+                                  {org.branches && org.branches.length > 0 ? (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => toggleExpand(org.id, e)}
+                                      className="p-0.5 hover:bg-slate-200 rounded"
+                                    >
+                                      {expandedOrgs.has(org.id) ? (
+                                        <ChevronDown className="w-4 h-4 text-slate-500" />
+                                      ) : (
+                                        <ChevronRight className="w-4 h-4 text-slate-500" />
+                                      )}
+                                    </button>
+                                  ) : (
+                                    <div className="w-5" />
+                                  )}
+
+                                  {/* Org Details */}
+                                  <div 
+                                    className="flex items-center gap-2 flex-1"
+                                    onClick={() => selectOrganization(org)}
+                                  >
+                                    <div className="w-7 h-7 rounded bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                                      <Building2 className="w-4 h-4 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-slate-900 truncate">{org.org_name}</div>
+                                      {org.city && (
+                                        <div className="flex items-center gap-1 text-xs text-slate-500">
+                                          <MapPin className="w-3 h-3" />
+                                          {org.city}
+                                        </div>
+                                      )}
+                                    </div>
+                                    {org.branches && org.branches.length > 0 && (
+                                      <Badge variant="outline" className="text-xs">
+                                        {org.branches.length} branches
+                                      </Badge>
+                                    )}
+                                    {selectedOrg?.id === org.id && (
+                                      <Check className="w-4 h-4 text-teal-600" />
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Branches */}
+                                {expandedOrgs.has(org.id) && org.branches && org.branches.length > 0 && (
+                                  <div className="bg-slate-50">
+                                    {org.branches.map((branch) => (
+                                      <div
+                                        key={branch.id}
+                                        onClick={() => selectOrganization(branch)}
+                                        className={`flex items-center gap-2 px-3 py-2 pl-10 hover:bg-slate-100 cursor-pointer ${
+                                          selectedOrg?.id === branch.id ? 'bg-teal-50' : ''
+                                        }`}
+                                      >
+                                        <div className="w-6 h-6 rounded bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                                          <Building2 className="w-3 h-3 text-white" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="font-medium text-sm text-slate-800 truncate">{branch.org_name}</div>
+                                          {branch.city && (
+                                            <div className="flex items-center gap-1 text-xs text-slate-500">
+                                              <MapPin className="w-3 h-3" />
+                                              {branch.city}
+                                            </div>
+                                          )}
+                                        </div>
+                                        {selectedOrg?.id === branch.id && (
+                                          <Check className="w-4 h-4 text-teal-600" />
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="login-email">Email</Label>
