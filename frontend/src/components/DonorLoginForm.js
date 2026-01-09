@@ -51,6 +51,18 @@ export default function DonorLoginForm({ onSuccess }) {
     donor_id: '',
   });
 
+  const handleIdentityNumberChange = (value) => {
+    // Auto-format MyKad numbers
+    if (['MyKad', 'MyKAS', 'MyPR'].includes(identityForm.identity_type)) {
+      value = formatMyKadNumber(value);
+    }
+    setIdentityForm({ ...identityForm, identity_number: value });
+  };
+
+  const handleIdentityTypeChange = (value) => {
+    setIdentityForm({ ...identityForm, identity_type: value, identity_number: '' });
+  };
+
   const handleRequestOTP = async () => {
     setLoading(true);
     try {
