@@ -6,7 +6,7 @@ import {
   Package, ClipboardList, Truck, RotateCcw, Trash2, BarChart3,
   Settings, LogOut, Menu, X, Sun, Moon, Home, Microscope, UserPlus, Bell,
   Warehouse, ClipboardCheck, Navigation, Trophy, Cog, Building2, ArrowLeftRight, Globe, History,
-  RefreshCw, ChevronDown, ArrowLeft, Lock
+  RefreshCw, ChevronDown, ArrowLeft, Lock, HardDrive
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
