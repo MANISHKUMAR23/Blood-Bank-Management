@@ -32,10 +32,73 @@ class CustomRoleCreate(BaseModel):
     description: Optional[str] = None
 
 @router.get("", response_model=List[UserResponse])
-async def get_users(current_user: dict = Depends(get_current_user)):
+async def get_users(
+    org_id: Optional[str] = None,
+    include_children: bool = False,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Get users based on current user's access level:
+    - System Admin: Can see ALL users, with optional org filtering
+    - Super Admin: Can see users in their org and child branches only
+    - Tenant Admin: Can see users in their own branch only
+    """
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
-    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(1000)
+    
+    user_type = current_user.get("user_type", "staff")
+    user_org_id = current_user.get("org_id")
+    
+    query = {}
+    
+    if user_type == "system_admin":
+        # System admin can see all users, optionally filtered by org
+        if org_id:
+            if include_children:
+                # Get this org + all child branches
+                child_orgs = await db.organizations.find(
+                    {"parent_org_id": org_id},
+                    {"id": 1}
+                ).to_list(100)
+                org_ids = [org_id] + [o["id"] for o in child_orgs]
+                query["org_id"] = {"$in": org_ids}
+            else:
+                query["org_id"] = org_id
+        # If no org_id filter, return all users
+        
+    elif user_type == "super_admin":
+        # Super admin can only see users in their org and child branches
+        # Never see system_admin users
+        if not user_org_id:
+            return []
+        
+        # Get child branches
+        child_orgs = await db.organizations.find(
+            {"parent_org_id": user_org_id},
+            {"id": 1}
+        ).to_list(100)
+        org_ids = [user_org_id] + [o["id"] for o in child_orgs]
+        
+        query["$and"] = [
+            {"org_id": {"$in": org_ids}},
+            {"user_type": {"$ne": "system_admin"}}  # Never show system admins
+        ]
+        
+    elif user_type == "tenant_admin":
+        # Tenant admin can only see users in their own branch
+        if not user_org_id:
+            return []
+        
+        query["$and"] = [
+            {"org_id": user_org_id},
+            {"user_type": {"$in": ["tenant_admin", "staff"]}}  # Only tenant admins and staff
+        ]
+        
+    else:
+        # Staff users cannot access user management
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    users = await db.users.find(query, {"_id": 0, "password_hash": 0}).to_list(1000)
     return users
 
 @router.put("/{user_id}")
