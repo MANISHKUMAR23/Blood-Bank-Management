@@ -372,29 +372,33 @@ export default function UserManagement() {
           <Card>
             <CardContent className="pt-4">
               <div className="flex flex-wrap gap-3 items-center">
+                {/* User Type Filter - only show relevant options */}
                 <Select value={filterUserType} onValueChange={setFilterUserType}>
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="User Type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="system_admin">System Admin</SelectItem>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                    {canSeeAllOrgs && <SelectItem value="system_admin">System Admin</SelectItem>}
+                    {(canSeeAllOrgs || canSeeOrgAndBranches) && <SelectItem value="super_admin">Super Admin</SelectItem>}
                     <SelectItem value="tenant_admin">Tenant Admin</SelectItem>
                   </SelectContent>
                 </Select>
 
-                <Select value={filterOrg} onValueChange={setFilterOrg}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Organization" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Organizations</SelectItem>
-                    {parentOrgs.map(org => (
-                      <SelectItem key={org.id} value={org.id}>{org.org_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Organization Filter - only for System Admin */}
+                {canSeeAllOrgs && (
+                  <Select value={filterOrg} onValueChange={setFilterOrg}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Organization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Organizations</SelectItem>
+                      {parentOrgs.map(org => (
+                        <SelectItem key={org.id} value={org.id}>{org.org_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
 
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger className="w-32">
