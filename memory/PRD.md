@@ -249,7 +249,8 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 | User | Email | Password | Type | Notes |
 |------|-------|----------|------|-------|
 | System Admin | admin@bloodbank.com | adminpassword | system_admin | Select "No organization" |
-| Super Admin | superadmin@bloodlink.com | superadmin123 | super_admin | Select "BloodLink Central" |
+| Super Admin | superadmin@bloodlink.com | superadmin123 | super_admin | BloodLink Central |
+| Tenant Admin | admin@northbranch.com | northadmin123 | tenant_admin | North Branch Updated |
 
 ---
 
