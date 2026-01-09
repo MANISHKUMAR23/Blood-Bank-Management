@@ -2169,7 +2169,7 @@ function ComponentTypeView({ data, displayMode, selectedItems, onToggleSelect, o
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {data.map((type) => (
+        {(data || []).map((type) => (
           <Card 
             key={type.component_type}
             className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] hover:border-teal-400"
