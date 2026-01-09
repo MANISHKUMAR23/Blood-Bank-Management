@@ -204,7 +204,7 @@ export default function Login() {
                   </div>
                 </Label>
                 
-                <div className="relative">
+                <div className="relative" data-org-selector>
                   {/* Selected Org Display / Trigger */}
                   <div
                     onClick={() => setShowOrgSelector(!showOrgSelector)}
