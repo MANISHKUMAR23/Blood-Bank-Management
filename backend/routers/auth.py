@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import List
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+import uuid
 
 import sys
 sys.path.append('..')
@@ -9,6 +10,42 @@ from database import db
 from models import User, UserCreate, UserLogin, UserResponse, UserType
 from models.audit import AuditAction, AuditModule
 from services import hash_password, verify_password, create_token, get_current_user, AuditService
+
+
+def get_device_info(user_agent: str) -> str:
+    """Extract device info from user agent string"""
+    if not user_agent:
+        return "Unknown Device"
+    
+    user_agent_lower = user_agent.lower()
+    
+    # Detect browser
+    browser = "Unknown Browser"
+    if "chrome" in user_agent_lower and "edg" not in user_agent_lower:
+        browser = "Chrome"
+    elif "firefox" in user_agent_lower:
+        browser = "Firefox"
+    elif "safari" in user_agent_lower and "chrome" not in user_agent_lower:
+        browser = "Safari"
+    elif "edg" in user_agent_lower:
+        browser = "Edge"
+    elif "opera" in user_agent_lower or "opr" in user_agent_lower:
+        browser = "Opera"
+    
+    # Detect OS
+    os_name = "Unknown OS"
+    if "windows" in user_agent_lower:
+        os_name = "Windows"
+    elif "mac" in user_agent_lower:
+        os_name = "macOS"
+    elif "linux" in user_agent_lower:
+        os_name = "Linux"
+    elif "android" in user_agent_lower:
+        os_name = "Android"
+    elif "iphone" in user_agent_lower or "ipad" in user_agent_lower:
+        os_name = "iOS"
+    
+    return f"{browser} on {os_name}"
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
