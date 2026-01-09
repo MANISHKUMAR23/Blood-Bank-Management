@@ -6,7 +6,7 @@ import json
 from datetime import datetime, timedelta
 
 class EnhancedInventoryTester:
-    def __init__(self, base_url="https://bloodsync-platform.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://bbms-security.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.admin_email = "admin@bloodbank.com"

@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import time
 
 class BloodBankAPITester:
-    def __init__(self, base_url="https://bloodsync-platform.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://bbms-security.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0
