@@ -2160,7 +2160,7 @@ function ComponentTypeView({ data, displayMode, selectedItems, onToggleSelect, o
     setShowDetailModal(true);
   };
 
-  if (!data) return null;
+  if (!data || !Array.isArray(data)) return null;
 
   const componentColors = {
     'whole_blood': 'from-red-500 to-red-600',
