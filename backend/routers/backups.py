@@ -1,6 +1,9 @@
 """
 Backup & Recovery Router
-Handles database backups and restoration for System Admins
+Handles database backups and restoration for admins based on their access level:
+- System Admin: Full access to all data
+- Super Admin: Access to their org and branches data
+- Tenant Admin: Access to their branch data only
 """
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import FileResponse
@@ -29,17 +32,49 @@ UPLOADS_DIR = "/app/uploads"
 # Ensure backup directory exists
 os.makedirs(BACKUP_DIR, exist_ok=True)
 
+# Collections that can be filtered by org_id
+ORG_SCOPED_COLLECTIONS = [
+    'donors', 'donations', 'blood_units', 'components', 'inventory',
+    'blood_requests', 'issuances', 'screenings', 'laboratory_results',
+    'qc_validations', 'storage_locations', 'custody_records', 'alerts',
+    'donation_sessions', 'donor_requests'
+]
+
+# Collections only for system admin (global data)
+SYSTEM_ONLY_COLLECTIONS = [
+    'users', 'organizations', 'audit_logs', 'system_settings', 
+    'password_policies', 'email_otps', 'user_sessions'
+]
+
+
+def get_user_access_level(user: dict) -> tuple:
+    """Returns (access_level, org_ids) based on user type"""
+    user_type = user.get("user_type", "staff")
+    org_id = user.get("org_id")
+    
+    if user_type == "system_admin":
+        return ("system", None)  # Full access
+    elif user_type == "super_admin":
+        return ("org", org_id)  # Org and branches
+    elif user_type == "tenant_admin":
+        return ("branch", org_id)  # Branch only
+    else:
+        return ("none", None)
+
 
 class BackupInfo(BaseModel):
     id: str
     filename: str
     created_at: str
     size_mb: float
-    type: str  # 'full' or 'database_only'
+    type: str  # 'full', 'database_only', 'org_backup', 'branch_backup'
     status: str  # 'completed', 'in_progress', 'failed'
     collections: List[str]
     includes_files: bool
     created_by: str
+    org_id: Optional[str] = None  # For org/branch specific backups
+    org_name: Optional[str] = None
+    backup_scope: str = "system"  # 'system', 'org', 'branch'
 
 
 class RestoreRequest(BaseModel):
