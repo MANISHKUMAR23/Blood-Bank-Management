@@ -204,7 +204,9 @@ export default function DonorRegistration() {
       case 2:
         return formData.phone && formData.address;
       case 3:
-        return formData.identity_type && formData.identity_number;
+        if (!formData.identity_type || !formData.identity_number) return false;
+        const validation = validateMalaysianId(formData.identity_type, formData.identity_number);
+        return validation.valid;
       case 4:
         return true; // Health questionnaire is optional but recommended
       case 5:
