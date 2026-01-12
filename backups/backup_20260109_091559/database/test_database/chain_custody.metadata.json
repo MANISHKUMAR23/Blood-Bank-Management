@@ -1,1 +1,0 @@
-{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"d6869db016f44809a5940286b0c5dccf","collectionName":"chain_custody","type":"collection"}

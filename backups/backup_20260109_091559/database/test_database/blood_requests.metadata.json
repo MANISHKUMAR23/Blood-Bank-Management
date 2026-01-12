@@ -1,1 +1,0 @@
-{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"f6f528184c2a4a6d9aad27ea2e002755","collectionName":"blood_requests","type":"collection"}
