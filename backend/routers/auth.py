@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
-from typing import List
+from typing import List, Optional
 from datetime import datetime, timezone, timedelta
+from pydantic import BaseModel
 import uuid
+import pyotp
 
 import sys
 sys.path.append('..')
@@ -10,6 +12,13 @@ from database import db
 from models import User, UserCreate, UserLogin, UserResponse, UserType
 from models.audit import AuditAction, AuditModule
 from services import hash_password, verify_password, create_token, get_current_user, AuditService
+
+
+class MFAVerifyLogin(BaseModel):
+    """Request body for MFA verification during login"""
+    mfa_token: str  # Temporary token from initial login
+    mfa_code: str   # TOTP code or backup code
+    mfa_method: str = "totp"  # "totp" or "backup_code"
 
 
 def get_device_info(user_agent: str) -> str:
