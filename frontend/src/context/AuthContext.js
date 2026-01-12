@@ -144,6 +144,16 @@ export const AuthProvider = ({ children }) => {
   const canViewNetworkInventory = () => isSystemAdmin() || isSuperAdmin() || isTenantAdmin();
   const canSwitchContext = () => isSystemAdmin() || isSuperAdmin();
 
+  // Function to set auth data directly (used for MFA login flow)
+  const setAuthData = ({ token: newToken, user: userData }) => {
+    localStorage.setItem('token', newToken);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    setToken(newToken);
+    setUser(userData);
+    // Fetch context info after setting auth
+    fetchContext();
+  };
+
   const value = {
     user,
     token,
@@ -151,6 +161,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    setAuthData,
     isAuthenticated: !!user,
     // Context switching
     contextInfo,
