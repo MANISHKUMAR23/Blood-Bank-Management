@@ -174,3 +174,34 @@ frontend/node_modules/.cache/default-development/13.pack
 # Environment files
 *.env
 *.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+*.egg-info/
+.eggs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local env
+.env.local
+.env.*.local
+
+# Test artifacts  
+test_reports/
+.pytest_cache/
+.ruff_cache/
+coverage/
