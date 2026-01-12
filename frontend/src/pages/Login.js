@@ -130,14 +130,69 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-      await login(loginForm.email, loginForm.password, loginForm.org_id || null);
-      toast.success('Login successful!');
-      navigate('/dashboard');
+      const response = await authAPI.login({
+        email: loginForm.email,
+        password: loginForm.password,
+        org_id: loginForm.org_id || null
+      });
+      
+      // Check if MFA is required
+      if (response.data.mfa_required) {
+        setMfaRequired(true);
+        setMfaToken(response.data.mfa_token);
+        setMfaUser(response.data.user);
+        toast.info('Please enter your MFA code to continue');
+      } else {
+        // No MFA required - complete login
+        const { token, user } = response.data;
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        if (setAuthData) {
+          setAuthData({ token, user });
+        }
+        toast.success('Login successful!');
+        navigate('/dashboard');
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Login failed');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleMfaVerify = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      const response = await authAPI.verifyMfaLogin({
+        mfa_token: mfaToken,
+        mfa_code: mfaCode,
+        mfa_method: useBackupCode ? 'backup_code' : 'totp'
+      });
+      
+      const { token, user } = response.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      if (setAuthData) {
+        setAuthData({ token, user });
+      }
+      toast.success('Login successful!');
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Invalid MFA code');
+      setMfaCode('');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetMfaFlow = () => {
+    setMfaRequired(false);
+    setMfaToken('');
+    setMfaCode('');
+    setMfaUser(null);
+    setUseBackupCode(false);
   };
 
   // Close dropdown when clicking outside
