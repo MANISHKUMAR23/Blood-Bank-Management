@@ -35,7 +35,7 @@ export default function DonorLanding() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
                 <Droplet className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-slate-900">BloodLink</span>
+              <span className="text-xl font-bold text-slate-900">BBMS</span>
             </div>
             <div className="flex items-center gap-4">
               <Button 
@@ -241,10 +241,10 @@ export default function DonorLanding() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Droplet className="w-6 h-6 text-teal-500" />
-            <span className="text-white font-bold">BloodLink</span>
+            <span className="text-white font-bold">BBMS</span>
           </div>
           <p className="text-sm">BBMS - Blood Bank Management System</p>
-          <p className="text-xs mt-2">© 2024 BloodLink. All rights reserved.</p>
+          <p className="text-xs mt-2">© 2024 BBMS. All rights reserved.</p>
         </div>
       </footer>
 

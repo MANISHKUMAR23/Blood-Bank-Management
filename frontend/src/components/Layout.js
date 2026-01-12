@@ -250,7 +250,7 @@ export default function Layout() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
               <Droplet className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-lg text-slate-900 dark:text-white">BloodLink</span>
+            <span className="font-bold text-lg text-slate-900 dark:text-white">BBMS</span>
           </div>
           <button 
             onClick={() => setSidebarOpen(false)}

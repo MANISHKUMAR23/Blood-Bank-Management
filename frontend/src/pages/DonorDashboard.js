@@ -76,7 +76,7 @@ export default function DonorDashboard() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
                 <Droplet className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-slate-900">BloodLink</span>
+              <span className="text-xl font-bold text-slate-900">BBMS</span>
             </div>
             <Button 
               variant="ghost" 

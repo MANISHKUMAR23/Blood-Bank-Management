@@ -89,7 +89,7 @@ export default function PublicTracking() {
               <Droplet className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">BloodLink</h1>
+              <h1 className="text-xl font-bold text-slate-900">BBMS</h1>
               <p className="text-xs text-slate-500">BBMS - Blood Bank Management System</p>
             </div>
           </div>

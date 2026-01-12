@@ -86,7 +86,7 @@ export default function DonorStatus() {
             </Button>
             <div className="flex items-center gap-2">
               <Droplet className="w-6 h-6 text-teal-600" />
-              <span className="font-bold text-lg">BloodLink</span>
+              <span className="font-bold text-lg">BBMS</span>
             </div>
           </div>
         </div>
