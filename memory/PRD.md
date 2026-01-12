@@ -248,8 +248,8 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 ### P3 (Future)
 - [ ] API Rate Limiting (deferred by user)
 - [ ] Logistics Module Notifications
-- [ ] MFA Enforcement at Login (login flow doesn't prompt for MFA code even if enabled)
 - [ ] Email Service Integration (Email OTP is MOCKED - prints to console)
+- [ ] Enterprise Backup & Recovery Upgrade (deferred by user)
 
 ---
 
