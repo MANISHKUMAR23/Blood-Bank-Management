@@ -1,0 +1,35 @@
+# BBMS Backend Dependencies
+# Python 3.10+
+# Install: pip install -r requirements.txt
+
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+gunicorn==21.2.0
+
+# Database
+motor==3.3.2
+pymongo==4.6.1
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+pyotp==2.9.0
+qrcode[pil]==7.4.2
+
+# Data Validation
+pydantic==2.5.3
+pydantic-settings==2.1.0
+email-validator==2.1.0
+
+# HTTP Client
+httpx==0.26.0
+
+# Utilities
+python-multipart==0.0.6
+python-dateutil==2.8.2
+aiofiles==23.2.1
+
+# Image Processing (for QR codes)
+Pillow==10.2.0
