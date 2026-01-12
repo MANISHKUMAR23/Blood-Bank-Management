@@ -233,6 +233,23 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 - [x] Updated validation patterns
 - [x] Files: DonorRegistration.js, DonorLoginForm.js, DonorRegisterForm.js
 
+### Code Cleanup & Deployment Preparation (COMPLETE - Jan 12, 2026)
+- [x] Renamed application to "BBMS" throughout (removed all "BloodLink" references)
+- [x] Removed all "emergent" references from code and UI
+- [x] Updated page titles and branding
+- [x] Created deployment folder with:
+  - [x] README.md - Comprehensive deployment guide
+  - [x] database_schema.md - MongoDB collections documentation
+  - [x] init_database.py - Database initialization script
+  - [x] requirements.txt - Python dependencies
+  - [x] install.sh - Automated installation script
+  - [x] docker-compose.yml - Docker deployment configuration
+  - [x] Dockerfile.backend / Dockerfile.frontend
+  - [x] mongo-init.js - MongoDB initialization
+  - [x] .env.template - Environment variables template
+- [x] Added /api/health endpoint for monitoring
+- [x] Updated server.py with BBMS branding
+
 ---
 
 ## Prioritized Backlog
@@ -254,7 +271,32 @@ Build a comprehensive Blood Bank Management System with multi-tenancy support, f
 
 ---
 
-## Test Credentials
+## Deployment
+
+### Deployment Files Location
+`/app/deployment/`
+
+### Quick Start (Development)
+```bash
+# Backend
+cd backend && pip install -r requirements.txt && uvicorn server:app --port 8001
+
+# Frontend
+cd frontend && yarn install && yarn start
+```
+
+### Production Deployment Options
+1. **Bare Metal/VM**: Use `install.sh` script
+2. **Docker**: Use `docker-compose.yml`
+
+### Initial Admin Credentials (after fresh deployment)
+- Email: `admin@bbms.local`
+- Password: `Admin@123456`
+- ⚠️ Change immediately after first login!
+
+---
+
+## Test Credentials (Development)
 
 | User | Email | Password | Type | Notes |
 |------|-------|----------|------|-------|
